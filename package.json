@@ -1,0 +1,13 @@
+{
+  "name": "education0S_teacher",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "lint": "pnpm --filter web lint",
+    "type-check": "pnpm --filter web exec tsc --noEmit"
+  }
+}
