@@ -4,10 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "preview": "pnpm --filter web preview",
-    "lint": "pnpm --filter web lint",
-    "type-check": "pnpm --filter web exec tsc --noEmit"
+    "dev": "pnpm --filter teacher-knowledge dev",
+    "build": "pnpm --filter teacher-knowledge build",
+    "preview": "pnpm --filter teacher-knowledge preview",
+    "lint": "pnpm --filter teacher-knowledge lint",
+    "type-check": "pnpm --filter teacher-knowledge exec tsc --noEmit"
   }
 }
