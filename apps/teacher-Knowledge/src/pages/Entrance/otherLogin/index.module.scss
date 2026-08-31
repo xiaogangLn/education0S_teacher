@@ -1,0 +1,65 @@
+@use "sass:color";
+
+// ========== 变量 ==========
+$brand-blue: #1677FF;
+$brand-light-blue: #40A9FF;
+$bg-dark: #0a1628;
+$card-bg: rgba(255, 255, 255, 0.96);
+
+// ========== 社交登录 ==========
+.socialLogin {
+    margin-top: 24px;
+    text-align: center;
+  }
+  
+  .divider {
+    position: relative;
+    font-size: 13px;
+    color: #b0b8c4;
+    margin-bottom: 16px;
+  
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 30%;
+      height: 1px;
+      background: #e8ecf1;
+    }
+  
+    &::before {
+      left: 0;
+    }
+  
+    &::after {
+      right: 0;
+    }
+  }
+  
+  .socialIcons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .socialBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid #e8ecf1;
+    background: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    &:hover {
+      border-color: $brand-blue;
+      background: #f0f7ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
+    }
+  }

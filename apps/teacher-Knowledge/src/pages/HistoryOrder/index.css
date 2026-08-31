@@ -1,0 +1,66 @@
+/* 页面整体 - 不允许滚动 */
+.history-page {
+    height: 100vh;
+    max-height: 100vh;
+}
+
+/* 列表滚动区域 - 自定义滚动条 */
+.history-list-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-list-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.history-list-scroll::-webkit-scrollbar-thumb {
+    background: #c1c7cd;
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.history-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a0a7ae;
+}
+
+/* 列表卡片 hover 效果 */
+.history-item-card {
+    transition: all 0.2s ease;
+}
+
+.history-item-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+/* 日期分隔线 */
+.history-date-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.history-date-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+}
+
+/* 选中状态 */
+.history-item-selected {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+}
+
+/* 加载更多按钮 */
+.load-more-btn {
+    color: #3b82f6;
+    transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+    color: #2563eb;
+    background: #eff6ff;
+}

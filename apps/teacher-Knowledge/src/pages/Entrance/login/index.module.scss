@@ -1,0 +1,220 @@
+@use "sass:color";
+// ========== 变量 ==========
+$brand-blue: #1677FF;
+$brand-light-blue: #40A9FF;
+$bg-dark: #0a1628;
+$card-bg: rgba(255, 255, 255, 0.96);
+// ========== 登录表单 ==========
+.form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .formGroup {
+    margin-bottom: 18px;
+  
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 5px;
+    }
+  }
+  
+  .labelHint {
+    font-size: 12px;
+    color: #888;
+    font-weight: 400;
+  }
+  
+  // ========== 输入框 ==========
+  .inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #e8ecf1;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+    background: #f8fafc;
+  
+    &:focus-within {
+      border-color: $brand-blue;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.1);
+    }
+  
+    .prefix {
+      padding: 0 12px 0 14px;
+      font-size: 16px;
+      color: #999;
+      flex-shrink: 0;
+    }
+  
+    input {
+      width: 100%;
+      padding: 12px 14px 12px 4px;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: #1a1a2e;
+      outline: none;
+      font-weight: 400;
+  
+      &::placeholder {
+        color: #b0b8c4;
+      }
+  
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+  
+  // ========== 2FA 双因子输入行 ==========
+  .twofaRow {
+    display: flex;
+    gap: 10px;
+  
+    .inputWrapper {
+      flex: 1;
+    }
+  
+    @media (max-width: 480px) {
+      flex-direction: column;
+    }
+  }
+  
+  // ========== 获取验证码按钮 ==========
+  .btnGetCode {
+    flex-shrink: 0;
+    padding: 0 16px;
+    background: #f0f4f9;
+    border: 1.5px solid #e8ecf1;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
+  
+    &:hover:not(:disabled) {
+      background: $brand-blue;
+      color: #fff;
+      border-color: $brand-blue;
+    }
+  
+    &.disabled,
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  
+    @media (max-width: 480px) {
+      padding: 10px;
+      width: 100%;
+    }
+  }
+  
+  // ========== 表单选项行 ==========
+  .formOptions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    margin: 6px 0 20px;
+  
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #666;
+      cursor: pointer;
+  
+      input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+        accent-color: $brand-blue;
+        cursor: pointer;
+      }
+    }
+  
+    a {
+      color: $brand-blue;
+      text-decoration: none;
+      font-weight: 500;
+  
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+// ========== 登录按钮 ==========
+.btnLogin {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, $brand-blue, $brand-light-blue);
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+  
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(22, 119, 255, 0.35);
+    }
+  
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  
+    .btnText {
+      display: inline;
+    }
+  
+    .loading {
+      display: none;
+    }
+  
+    &.loadingState {
+      .btnText {
+        display: none;
+      }
+      .loading {
+        display: inline;
+      }
+    }
+  }
+
+  // ========== 安全标识 ==========
+.securityBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #888;
+  }
+  
+  .dot {
+    width: 6px;
+    height: 6px;
+    background: #52c41a;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
