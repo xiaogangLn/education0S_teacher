@@ -3,7 +3,7 @@ import { useState } from 'react';
 import loginBg from '../../../assets/images/bg.jpeg';
 import { LoginComponent } from './login';
 import { OtherLogin } from './otherLogin';
-import { EducationOSRegister } from './register';
+import { Register } from './register';
 import styles from './index.module.scss';
 
 // ==================== 信任徽章数据 ====================
@@ -90,7 +90,7 @@ const EducationOSEntrance = () => {
                     </>
                     ): (
                         <>
-                            <EducationOSRegister />
+                            <Register />
                             <div className={styles.registerEntry}>
                                 <span className={styles.registerHint}>已有账号</span>
                                 <button className={styles.registerBtn} onClick={() => setIsLogin(true)}>
