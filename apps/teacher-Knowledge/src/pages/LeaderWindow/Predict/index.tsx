@@ -1,6 +1,6 @@
 // index.tsx - 主页面
 import React from 'react';
-import { Spin, Alert, Space } from 'antd';
+import { Spin, Alert, Space, Button } from 'antd';
 import { useReportData } from './hooks/useReportData';
 import { useReportPagination } from './hooks/useReportPagination';
 import { ReportStats } from './components/ReportStats';
@@ -8,6 +8,8 @@ import { ReportFilter } from './components/ReportFilter';
 import { ReportTable } from './components/ReportTable';
 import { ReportPagination } from './components/ReportPagination';
 import { gradeOptions, subjectOptions, dimensionOptions, PAGE_SIZE } from './constants';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 interface DetailedReportPageProps {
   onRowClick?: (record: any) => void;
@@ -38,6 +40,7 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
     nextPage,
     prevPage,
   } = useReportPagination(filteredData, PAGE_SIZE);
+  const navigate = useNavigate();
 
   const handleExport = () => {
     console.log('导出数据:', filteredData);
@@ -60,14 +63,21 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
           <h1 className="text-2xl font-bold text-gray-800">📊 查看详细报表</h1>
           <p className="text-sm text-gray-500">
             全年级各班级详细数据 · 学科对比 · 趋势明细
+            
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span>📅 2026-09-02</span>
-          <span className="w-px h-4 bg-gray-200" />
-          <span className="cursor-default hover:text-blue-500" onClick={reload}>
-            🔄 刷新
-          </span>
+            <span>📅 2026-09-02</span>
+            <span className="w-px h-4 bg-gray-200 ml-2" />
+            <span className="cursor-default hover:text-blue-500 ml-2" onClick={reload}>
+                🔄 刷新
+            </span>
+            <Button 
+                icon={<ArrowLeftOutlined />}  
+                onClick={() => navigate('/leaderWindow')}
+            >
+                返回
+            </Button>
         </div>
       </div>
 

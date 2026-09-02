@@ -1,6 +1,6 @@
 // index.tsx - 主页面
 import React, { useState } from 'react';
-import { message } from 'antd';
+import { Button, message } from 'antd';
 import { useReviewList } from './hooks/useReviewList';
 import { useReviewStats } from './hooks/useReviewStats';
 import { ReviewStats } from './components/ReviewStats';
@@ -9,6 +9,8 @@ import { ReviewItem } from './components/ReviewItem';
 import { ReviewPagination } from './components/ReviewPagination';
 import ReviewDetailModal from './components/ReviewDetailModal';
 import { useReviewDetail } from './hooks/useReviewDetail';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 export const ReviewCenterPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export const ReviewCenterPage: React.FC = () => {
     resetFilter,
     goToPage,
   } = useReviewList();
+  const navigate = useNavigate();
 
   const { detail, loadDetail } = useReviewDetail(selectedId || '');
 
@@ -54,11 +57,21 @@ export const ReviewCenterPage: React.FC = () => {
   return (
     <div className="">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">📋 审核中心</h1>
-        <p className="text-sm text-gray-500">
-          审核教师提交的教学计划 · 批注 · 通过 / 驳回 · 进度追踪
-        </p>
+      <div className='flex item-center justify-between'>
+        <div>
+            <h1 className="text-2xl font-bold text-gray-800">📋 审核中心</h1>
+            <p className="text-sm text-gray-500">
+            审核教师提交的教学计划 · 批注 · 通过 / 驳回 · 进度追踪
+            </p>
+        </div>
+        <div>
+            <Button 
+                icon={<ArrowLeftOutlined />}  
+                onClick={() => navigate('/workbench')}
+            >
+                返回
+            </Button>
+        </div>
       </div>
 
       {/* 统计卡片 */}

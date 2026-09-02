@@ -1,16 +1,18 @@
 import { Spin, Empty, Button } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import { ScheduleTimeline } from './components/ScheduleTimeline';
 import { useTeacherProfile } from './hook/useTeacherProfile';
 import { StatsRow } from './components/StatsRow';
 import { DimensionGrid } from './components/DimensionGrid';
 import { Achievements } from './components/Achievements';
 import { RadarChart } from './components/RadarChart';
+import { useNavigate } from 'react-router-dom';
 
 
 
 const TeacherPortraitMini = () => {
   const { profile, loading, error, refresh } = useTeacherProfile("1");
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -42,6 +44,12 @@ const TeacherPortraitMini = () => {
             </div>
             </div>
             <div className="flex gap-2">
+            <Button 
+                  icon={<ArrowLeftOutlined />}  
+                  onClick={() => navigate('/workbench')}
+              >
+                返回
+              </Button>
             <Button className="rounded-full">📊 导出报告</Button>
             <Button type="primary" className="rounded-full">📈 查看完整分析</Button>
             </div>

@@ -82,7 +82,7 @@ const HeaderComponent = () => {
     return (
         <div className="w-[100%] p-4 px-6">
             <div className="bg-[white] p-3 rounded-[12px] flex items-center justify-between">
-                <div className="text-[18px] font-bold cursor-pointer" onClick={() => navigate('/workbench')}>
+                <div className="text-[18px] font-bold cursor-pointer" onClick={() => navigate('/leaderWindow')}>
                     📘 Education
                     <span className="text-[#4f46e5]">OS</span>
                 </div>
