@@ -5,10 +5,10 @@ import styles from './index.module.scss';
 
   // ==================== 模拟数据 ====================
 const schools = [
-    { id: '1', name: '西安高新第一中学', code: 'XAGX01' },
-    { id: '2', name: '西安高新第二中学', code: 'XAGX02' },
-    { id: '3', name: '西安铁一中学', code: 'XATY01' },
-    { id: '4', name: '西安交通大学附属中学', code: 'XAJDFZ' },
+    { id: '1', name: '西安高新第一中学(数学)', code: 'XAGX01' },
+    { id: '2', name: '西安高新第二中学(英语)', code: 'XAGX02' },
+    { id: '3', name: '西安铁一中学(数学)', code: 'XATY01' },
+    { id: '4', name: '西安交通大学附属中学(数学)', code: 'XAJDFZ' },
 ];
 
 const grades = ['高一', '高二', '高三', '初一', '初二', '初三', '小一', '小二', '小三', '小四', '小五', '小六'];
@@ -181,15 +181,15 @@ const RenderStep1 = () => {
 
             {/* 组织信息 */}
             <div className={styles.formGroup}>
-                <label className={styles.label}>所属学校 <span className={styles.required}>*</span></label>
+                <label className={styles.label}>所属学校(教学学科) <span className={styles.required}>*</span></label>
                 <div className={classNames(styles.inputWrapper, { [styles.error]: formErrors.schoolName })}>
-                <span className={styles.prefix}>🏫</span>
+                <span className={styles.prefix} style={{marginTop: '-5px'}}>🏫</span>
                 <select
                     name="schoolName"
                     value={formData.schoolName}
                     onChange={handleInputChange}
                 >
-                    <option value="">请选择学校</option>
+                    <option value="">请选择学校及教学学科</option>
                     {schools.map((school) => (
                     <option key={school.id} value={school.name}>
                         {school.name} ({school.code})

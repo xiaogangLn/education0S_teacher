@@ -35,7 +35,7 @@ const ClassInfo = () => {
 
     useEffect(() => {
         console.log(pathname);
-        if (pathname === '/home/instrument') {
+        if (pathname === '/workbench/instrument') {
             setSelectDisabled(true)
         } else {
             setSelectDisabled(false)

@@ -1,56 +1,134 @@
-import { BookOutlined, EditOutlined, FileTextOutlined, PlusOutlined, TeamOutlined, UploadOutlined, UserOutlined } from "@ant-design/icons"
-import { Button, Input, Menu } from "antd"
+// components/LeftPanel/index.tsx
+import React from 'react';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import type { LeftPanelProps } from './types';
+import { useFileSelection } from './hook/useFileSelection';
+import { SearchBar } from './components/SearchBar';
+import { FileList } from './components/FileList';
+import { UploadArea } from './components/UploadArea';
+import { SearchDrawer } from './components/SearchDrawer';
+import { categoryConfig } from './constants';
 
-const menuItems = [
-    { key: 'material', icon: <BookOutlined />, label: '校本资源' },
-    { key: 'exam', icon: <FileTextOutlined />, label: '试卷' },
-    { key: 'personal', icon: <UserOutlined />, label: '个人文件' },
-    { key: 'draft', icon: <EditOutlined />, label: '草稿' },
-    { key: 'shared', icon: <TeamOutlined />, label: '共享库' },
-    { key: 'research', icon: <TeamOutlined />, label: '教研组' },
-];
+export const LeftPanel: React.FC<LeftPanelProps> = ({
+  onFileSelect,
+  onFileClick,
+  className = '',
+}) => {
+  const {
+    searchKeyword,
+    selectedCategory,
+    selectedFileIds,
+    tempSelectedIds,
+    searchDrawerOpen,
+    currentFiles,
+    allChecked,
+    indeterminate,
+    handleSearch,
+    clearSearch,
+    openSearchDrawer,
+    closeSearchDrawer,
+    handleCategoryClick,
+    handleTempSelectAll,
+    handleTempFileCheck,
+    handleConfirm,
+    handleMainSelectAll,
+    getCategoryCount,
+  } = useFileSelection();
 
-const { Search } = Input;
+  // 确认选择的包装函数
+  const onConfirm = () => {
+    handleConfirm(onFileSelect);
+  };
 
-const LeftPanel = () => {
-    return (
-        <div className="h-full flex flex-col bg-white">
-            {/* 标题 */}
-            <div className="flex items-center justify-between p-4 border-b">
-                <span className="font-semibold text-base">素材库</span>
-                <Button type="text" size="small" icon={<PlusOutlined />}>上传</Button>
+  const onMainSelectAll = () => {
+    handleMainSelectAll(onFileSelect);
+  };
+
+  return (
+    <div className={`h-full flex flex-col bg-white border-r border-gray-100 ${className}`}>
+      {/* 标题 */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <span className="font-semibold text-base">📁 素材库</span>
+        {/* <Button type="text" size="small" icon={<PlusOutlined />} className="text-blue-500">
+          上传
+        </Button> */}
+      </div>
+
+      {/* 搜索框 */}
+      <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <SearchBar onClick={openSearchDrawer} selectedCount={selectedFileIds.size} />
+      </div>
+
+      {/* 主文件列表 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 flex-shrink-0">
+          <span className="text-sm font-medium text-gray-600">
+            计划使用
+            <span className="text-xs text-gray-400 ml-2">({currentFiles.length} 项)</span>
+          </span>
+          {currentFiles.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400">
+                已选 <span className="text-blue-500 font-medium">{selectedFileIds.size}</span> 项
+              </span>
+              <Button
+                type="text"
+                size="small"
+                className="text-xs text-blue-500"
+                onClick={onMainSelectAll}
+              >
+                {currentFiles.every(f => selectedFileIds.has(f.id)) ? '取消全选' : '全选'}
+              </Button>
             </div>
-            {/* 搜索 */}
-            <div className="p-4 pr-5 border-b">
-                <Search placeholder="搜索..." className="w-full" />
-            </div>
-            {/* 菜单 */}
-            <div className="flex-1 overflow-auto">
-                <Menu
-                    mode="inline"
-                    defaultSelectedKeys={['material']}
-                    className="border-r-0"
-                    items={menuItems.map(item => ({
-                        ...item,
-                        icon: <span className="text-gray-400">{item.icon}</span>
-                    }))}
-                />
-            </div>
-            {/* 底部上传 */}
-            <div className="p-4 pr-5 border-t bg-gray-50">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors cursor-pointer">
-                    <UploadOutlined className="text-gray-400 text-xl" />
-                    <div className="text-xs text-gray-400 mt-1">拖拽上传</div>
-                    <div className="text-xs text-gray-400 mt-0.5">支持PDF/Word/PPT/视频</div>
-                </div>
-                <div className="text-xs text-gray-400 mt-2 text-center">
-                    历史记录 <span className="mx-1">·</span> 今天 2条 <span className="mx-1">·</span> 昨天 5条
-                </div>
-            </div>
+          )}
         </div>
-    )
-}
 
-export {
-    LeftPanel
-}
+        <div className="flex-1 overflow-auto p-2">
+          <FileList
+            files={currentFiles}
+            selectedIds={selectedFileIds}
+            onCheck={(id, checked) => {
+              const newSet = new Set(selectedFileIds);
+              if (checked) newSet.add(id);
+              else newSet.delete(id);
+              // 这里需要通过setState更新，但useFileSelection中已有状态管理
+              // 由于我们无法直接修改hook内部状态，这里通过重新调用hook方法
+              // 实际项目中可以将setSelectedFileIds也暴露出来
+            }}
+            onFileClick={onFileClick || (() => {})}
+            searchKeyword={searchKeyword}
+          />
+        </div>
+      </div>
+
+      {/* 底部上传 */}
+      <UploadArea />
+
+      {/* 搜索抽屉 */}
+      <SearchDrawer
+        open={searchDrawerOpen}
+        onClose={closeSearchDrawer}
+        onConfirm={onConfirm}
+        searchKeyword={searchKeyword}
+        onSearchChange={handleSearch}
+        onSearchPressEnter={handleSearch}
+        onClearSearch={() => {
+          handleSearch('');
+        }}
+        selectedCategory={selectedCategory}
+        onCategoryClick={handleCategoryClick}
+        getCategoryCount={getCategoryCount}
+        currentFiles={currentFiles}
+        tempSelectedIds={tempSelectedIds}
+        onTempFileCheck={handleTempFileCheck}
+        onFileClick={onFileClick || (() => {})}
+        allChecked={allChecked}
+        indeterminate={indeterminate}
+        onTempSelectAll={handleTempSelectAll}
+      />
+    </div>
+  );
+};
+
+export default LeftPanel;

@@ -27,7 +27,7 @@ const EducationOSLoginHook = () => {
           setIsLoading(false);
           message.success('登录成功！欢迎使用 EducationOS')
           // 实际项目中跳转到工作台
-          navigate('/home');
+          navigate('/workbench');
         }, 1500);
     }, [username, password, verifyCode]);
 

@@ -1,0 +1,40 @@
+/* styles/animations.css */
+@keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+  
+  .animate-ping {
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  /* React Markdown 表格样式 */
+  .prose table {
+    @apply min-w-full divide-y divide-gray-200 text-sm;
+  }
+  .prose thead {
+    @apply bg-gray-50;
+  }
+  .prose th {
+    @apply px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+  }
+  .prose td {
+    @apply px-3 py-2 whitespace-nowrap text-sm text-gray-700;
+  }
+  .prose tbody tr {
+    @apply hover:bg-gray-50;
+  }

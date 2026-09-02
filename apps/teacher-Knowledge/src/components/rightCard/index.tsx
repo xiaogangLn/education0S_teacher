@@ -5,6 +5,11 @@ const templateItems = [
     { title: '教案模板', icon: <FileOutlined />, tag: '校本资源' },
     { title: '课件模板', icon: <AppstoreOutlined />, tag: '校本资源' },
     { title: '试卷模板', icon: <FileTextOutlined />, tag: '个人文件' },
+    { title: 'PDF', icon: <FileTextOutlined />, tag: '个人文件' },
+    { title: 'Doc', icon: <FileTextOutlined />, tag: '个人文件' },
+    { title: 'Excel', icon: <FileTextOutlined />, tag: '个人文件' },
+    { title: 'Mp3', icon: <FileTextOutlined />, tag: '个人文件' },
+    { title: 'Mp4', icon: <FileTextOutlined />, tag: '个人文件' },
 ];
 
 const RightPanel = () => {
@@ -12,7 +17,7 @@ const RightPanel = () => {
         <div className="h-full flex flex-col bg-white">
         <div className="flex items-center justify-between p-4 pl-7 border-b">
             <span className="font-semibold text-base">模板与产物</span>
-            <Button type="text" size="small" icon={<MoreOutlined />} />
+            {/* <Button type="text" size="small" icon={<MoreOutlined />} /> */}
             </div>
             
             <div className="flex-1 overflow-auto p-4 pl-7 space-y-4">
