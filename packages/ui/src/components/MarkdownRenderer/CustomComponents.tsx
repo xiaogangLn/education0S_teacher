@@ -1,9 +1,8 @@
 // packages/ui/src/components/MarkdownRenderer/CustomComponents.tsx
 import React from 'react';
-import { Tag, Alert, Table, Typography } from 'antd';
+import { Tag, Alert } from 'antd';
 import { CheckCircleOutlined, WarningOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
-const { Text, Paragraph } = Typography;
 
 // 自定义代码块组件
 export const CodeBlock: React.FC<{ language?: string; children: string }> = ({ language, children }) => {
@@ -86,22 +85,16 @@ export const StepConfirm: React.FC<{
   onModify?: () => void;
   onRegenerate?: () => void;
   confirmText?: string;
-}> = ({ onConfirm, onModify, onRegenerate, confirmText = '确认' }) => {
+}> = ({ onConfirm, onRegenerate, confirmText = '确认进入下一阶段' }) => {
   return (
     <div className="step-actions">
       <button className="btn btn-primary" onClick={onConfirm}>
         ✅ {confirmText}
       </button>
-      {onModify && (
-        <button className="btn btn-outline" onClick={onModify}>
-          ✏️ 修改
-        </button>
-      )}
-      {onRegenerate && (
-        <button className="btn btn-outline" onClick={onRegenerate}>
-          🔄 重新生成
-        </button>
-      )}
+      <button className="btn btn-outline" onClick={onRegenerate}>
+        🔄 重新生成
+      </button>
+      <p className='desc'>不满意可以继续对话调整</p>
     </div>
   );
 };

@@ -1,10 +1,9 @@
 // packages/ui/src/components/MarkdownRenderer/StepRenderer.tsx
-import React, { useState, useEffect } from 'react';
-import { Steps, Progress, StepsProps } from 'antd';
+import React, { useEffect } from 'react';
+import { Steps, type StepsProps } from 'antd';
 import { TypewriterEffect } from './TypewriterEffect';
 import { StepConfirm } from './CustomComponents';
-import { StepData } from './types';
-import { useStepRenderer } from './hooks/useStepRenderer';
+import type { StepData } from './types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CheckCircleOutlined } from '@ant-design/icons';
@@ -16,9 +15,15 @@ interface StepRendererProps {
   customComponents?: Record<string, React.ComponentType<any>>;
   onStepComplete?: (stepIndex: number) => void;
   onAllComplete?: () => void;
+  externalStepIndex?: number;
+  showConfirm?: boolean;
+  confirmText?: string;
+  onConfirm?: () => void;
+  onModify?: () => void;
+  onRegenerate?: () => void;
+  isStreaming?: boolean;
 }
 
-// 定义步骤状态类型
 type StepStatus = 'wait' | 'process' | 'finish' | 'error';
 
 export const StepRenderer: React.FC<StepRendererProps> = ({
@@ -28,33 +33,34 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   customComponents = {},
   onStepComplete,
   onAllComplete,
+  externalStepIndex = 0,
+  showConfirm = true,
+  confirmText = '确认进入下一阶段',
+  onConfirm,
+  onModify,
+  onRegenerate,
+  isStreaming = false,
 }) => {
-  const {
-    steps,
-    currentStep,
-    currentStepIndex,
-    isComplete,
-    completeCurrentStep,
-    getStats,
-  } = useStepRenderer(initialSteps);
-
-  const { progress } = getStats();
+  // 使用外部传入的 steps，而不是内部管理
+  const steps = initialSteps;
+  const stepIndex = Math.min(externalStepIndex, steps.length - 1);
+  const currentStep = steps[stepIndex] || null;
 
   // 当步骤完成时触发回调
   useEffect(() => {
     if (currentStep?.status === 'completed') {
-      onStepComplete?.(currentStepIndex);
+      onStepComplete?.(stepIndex);
     }
-  }, [currentStep, currentStepIndex, onStepComplete]);
+  }, [currentStep, stepIndex, onStepComplete]);
 
   // 所有步骤完成时触发回调
+  const allCompleted = steps.every(step => step.status === 'completed');
   useEffect(() => {
-    if (isComplete) {
+    if (allCompleted && steps.length > 0) {
       onAllComplete?.();
     }
-  }, [isComplete, onAllComplete]);
+  }, [allCompleted, steps.length, onAllComplete]);
 
-  // 步骤状态图标
   const getStepStatus = (status: StepData['status']): StepStatus => {
     const map: Record<StepData['status'], StepStatus> = {
       pending: 'wait',
@@ -72,32 +78,20 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     title: step.title,
     status: getStepStatus(step.status) as StepsProps['status'],
     icon: step.status === 'completed' ? <CheckCircleOutlined /> : undefined,
-    disabled: index > currentStepIndex,
+    disabled: index > stepIndex,
   }));
+
+  // 判断当前步骤是否已完成
+  const isStepCompleted = currentStep.status === 'completed';
 
   return (
     <div className="step-renderer">
-      {/* 进度条 */}
-      <div className="step-progress">
-        <Progress
-          percent={progress}
-          status={isComplete ? 'success' : 'active'}
-          showInfo
-          strokeColor={{
-            from: '#4f46e5',
-            to: '#10b981',
-          }}
-        />
-        <div className="step-counter">
-          步骤 {currentStepIndex + 1} / {steps.length}
-        </div>
-      </div>
-
       {/* 步骤指示器 */}
       <Steps
-        current={currentStepIndex}
+        current={stepIndex}
         status={getStepStatus(currentStep.status)}
         items={stepItems}
+        size="small"
         className="step-indicator"
       />
 
@@ -126,10 +120,12 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
               speed={typingSpeed}
               autoStart={currentStep.status === 'processing' || currentStep.status === 'pending'}
               onComplete={() => {
-                // 打字完成后自动标记为 processing 或 completed
-                if (currentStep.status !== 'completed') {
-                  // 这里可以触发确认按钮显示
+                // 打字完成后标记步骤为 processing（如果当前是 pending）
+                if (currentStep.status === 'pending') {
+                  // 这里可以触发状态更新
                 }
+                // 触发步骤完成回调
+                onStepComplete?.(stepIndex);
               }}
               customComponents={customComponents}
             />
@@ -142,27 +138,14 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
             </ReactMarkdown>
           )}
         </div>
-
-        {/* 操作按钮 */}
-        {currentStep.confirmable !== false && currentStep.status !== 'completed' && (
-          <div className="step-actions">
-            <StepConfirm
-              onConfirm={() => {
-                // 这里可以添加确认逻辑
-                completeCurrentStep();
-              }}
-              onModify={() => {
-                // 修改逻辑
-                console.log('修改步骤:', currentStepIndex);
-              }}
-              onRegenerate={() => {
-                // 重新生成逻辑
-                console.log('重新生成步骤:', currentStepIndex);
-              }}
-              confirmText={currentStep.confirmText || '确认'}
-            />
-          </div>
-        )}
+        <div className="step-actions">
+          <StepConfirm
+            onConfirm={onConfirm || (() => {})}
+            onModify={onModify}
+            onRegenerate={onRegenerate}
+            confirmText={confirmText}
+          />
+        </div>
 
         {currentStep.status === 'completed' && (
           <div className="step-completed">
@@ -171,41 +154,31 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         )}
       </div>
 
-      {/* 样式 */}
       <style>{`
         .step-renderer {
-          padding: 16px;
-          background: #fff;
-          border-radius: 12px;
-        }
-        .step-progress {
-          margin-bottom: 16px;
-        }
-        .step-counter {
-          text-align: center;
-          font-size: 13px;
-          color: #6b7280;
-          margin-top: 4px;
+          padding: 12px 0;
+          background: transparent;
+          border-radius: 0;
         }
         .step-indicator {
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
         .step-content {
           background: #fafcff;
           border-radius: 12px;
-          padding: 20px;
+          padding: 16px 20px;
           border: 1px solid #e9edf4;
         }
         .step-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           flex-wrap: wrap;
           gap: 8px;
         }
         .step-title {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           margin: 0;
           color: #0b1a33;
@@ -215,37 +188,68 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           color: #6b7280;
           padding: 2px 12px;
           border-radius: 30px;
-          font-size: 12px;
+          font-size: 11px;
         }
         .step-status-badge .badge-processing {
           background: #dbeafe;
           color: #1d4ed8;
           padding: 2px 12px;
           border-radius: 30px;
-          font-size: 12px;
+          font-size: 11px;
         }
         .step-status-badge .badge-completed {
           background: #d1fae5;
           color: #065f46;
           padding: 2px 12px;
           border-radius: 30px;
-          font-size: 12px;
+          font-size: 11px;
         }
         .step-body {
-          min-height: 60px;
+          min-height: 40px;
+          font-size: 14px;
+          line-height: 1.7;
+        }
+        .step-body h1 {
+          font-size: 20px;
+          font-weight: 700;
+          margin: 12px 0 8px;
+        }
+        .step-body h2 {
+          font-size: 17px;
+          font-weight: 600;
+          margin: 10px 0 6px;
+        }
+        .step-body h3 {
+          font-size: 15px;
+          font-weight: 600;
+          margin: 8px 0 4px;
+        }
+        .step-body p {
+          margin: 4px 0;
+        }
+        .step-body ul, .step-body ol {
+          padding-left: 20px;
+          margin: 4px 0;
+        }
+        .step-body li {
+          margin: 2px 0;
         }
         .step-actions {
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px solid #e9edf4;
+          margin-top: 12px;
+          padding-top: 12px;
           display: flex;
+          align-items: center;
           gap: 8px;
           flex-wrap: wrap;
         }
+        .step-actions .desc {
+          font-size: 14px;
+          color: #9CA3AF;
+        }
         .step-actions .btn {
-          padding: 8px 20px;
+          padding: 6px 18px;
           border-radius: 30px;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
           border: none;
           cursor: pointer;
@@ -268,11 +272,11 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           color: #4f46e5;
         }
         .step-completed {
-          margin-top: 16px;
-          padding-top: 16px;
+          margin-top: 12px;
+          padding-top: 12px;
           border-top: 1px solid #e9edf4;
           text-align: center;
-          font-size: 14px;
+          font-size: 13px;
         }
         .typewriter-container .cursor {
           display: inline-block;
@@ -290,56 +294,24 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
-        /* AI 标注样式 */
         .ai-annotation {
           background: #f3f0ff;
           border-radius: 8px;
-          padding: 12px 16px;
-          margin: 8px 0;
+          padding: 10px 14px;
+          margin: 6px 0;
           border-left: 4px solid #8b5cf6;
-        }
-        .ai-annotation-content {
-          margin-top: 4px;
         }
         .teacher-edit {
           background: #fffbeb;
           border-radius: 8px;
-          padding: 12px 16px;
-          margin: 8px 0;
+          padding: 10px 14px;
+          margin: 6px 0;
           border-left: 4px solid #f59e0b;
         }
-        .teacher-edit-content {
-          margin-top: 4px;
-        }
-        .code-block {
-          background: #1a1a2e;
+        .callout {
           border-radius: 8px;
-          margin: 8px 0;
-          overflow: hidden;
-        }
-        .code-block-header {
-          padding: 8px 16px;
-          background: #2d2d44;
-          border-bottom: 1px solid #3d3d5c;
-        }
-        .code-block-language {
-          color: #a5b4fc;
-          font-size: 12px;
-          font-weight: 500;
-        }
-        .code-block-content {
-          padding: 16px;
-          margin: 0;
-          overflow-x: auto;
-          color: #e5e7eb;
-          font-family: 'Consolas', monospace;
-          font-size: 13px;
-          line-height: 1.7;
-          background: transparent;
-        }
-        .code-block-content code {
-          background: transparent;
-          color: #e5e7eb;
+          padding: 10px 14px;
+          margin: 6px 0;
         }
       `}</style>
     </div>

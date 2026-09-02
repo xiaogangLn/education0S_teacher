@@ -32,6 +32,7 @@
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.3",
     "react-syntax-highlighter": "^16.1.1",
+    "react-use": "^17.6.1",
     "remark-gfm": "^4.0.1",
     "y-indexeddb": "^9.0.12",
     "y-protocols": "^1.0.7",

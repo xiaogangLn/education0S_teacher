@@ -1,6 +1,6 @@
 // packages/ui/src/components/MarkdownRenderer/index.tsx
 import React from 'react';
-import { MarkdownRendererProps } from './types';
+import type { MarkdownRendererProps } from './types';
 import { TypewriterEffect } from './TypewriterEffect';
 import { defaultCustomComponents } from './CustomComponents';
 import ReactMarkdown from 'react-markdown';

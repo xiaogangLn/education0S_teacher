@@ -44,15 +44,17 @@ export const FileList: React.FC<FileListProps> = ({
           </span>
         </div>
       )}
-      {files.map(file => (
-        <FileListItem
-          key={file.id}
-          file={file}
-          checked={selectedIds.has(file.id)}
-          onCheck={onCheck}
-          onClick={onFileClick}
-        />
-      ))}
+      <div className="space-y-2">
+        {files.map(file => (
+          <FileListItem
+            key={file.id}
+            file={file}
+            checked={selectedIds.has(file.id)}
+            onCheck={onCheck}
+            onClick={onFileClick}
+          />
+        ))}
+      </div>
     </>
   );
 };

@@ -1,6 +1,5 @@
-// components/LeftPanel/index.tsx
+// components/leftCard/index.tsx
 import React from 'react';
-import { PlusOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import type { LeftPanelProps } from './types';
 import { useFileSelection } from './hook/useFileSelection';
@@ -8,11 +7,12 @@ import { SearchBar } from './components/SearchBar';
 import { FileList } from './components/FileList';
 import { UploadArea } from './components/UploadArea';
 import { SearchDrawer } from './components/SearchDrawer';
-import { categoryConfig } from './constants';
+import { useDeepCompareEffect } from 'react-use';
 
 export const LeftPanel: React.FC<LeftPanelProps> = ({
   onFileSelect,
   onFileClick,
+  onSelectedFiles,  // 新增
   className = '',
 }) => {
   const {
@@ -25,7 +25,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     allChecked,
     indeterminate,
     handleSearch,
-    clearSearch,
     openSearchDrawer,
     closeSearchDrawer,
     handleCategoryClick,
@@ -34,7 +33,16 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     handleConfirm,
     handleMainSelectAll,
     getCategoryCount,
+    getSelectedFiles,
   } = useFileSelection();
+
+  // 当选中的文件变化时，回调给父组件
+  useDeepCompareEffect(() => {
+    if (onSelectedFiles) {
+      const selectedFiles = getSelectedFiles();
+      onSelectedFiles(selectedFiles);
+    }
+  }, [selectedFileIds, getSelectedFiles, onSelectedFiles]);
 
   // 确认选择的包装函数
   const onConfirm = () => {
@@ -50,9 +58,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       {/* 标题 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <span className="font-semibold text-base">📁 素材库</span>
-        {/* <Button type="text" size="small" icon={<PlusOutlined />} className="text-blue-500">
-          上传
-        </Button> */}
       </div>
 
       {/* 搜索框 */}
@@ -89,12 +94,9 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
             files={currentFiles}
             selectedIds={selectedFileIds}
             onCheck={(id, checked) => {
-              const newSet = new Set(selectedFileIds);
-              if (checked) newSet.add(id);
-              else newSet.delete(id);
-              // 这里需要通过setState更新，但useFileSelection中已有状态管理
-              // 由于我们无法直接修改hook内部状态，这里通过重新调用hook方法
-              // 实际项目中可以将setSelectedFileIds也暴露出来
+              // 实际项目中需要暴露 setSelectedFileIds
+              // 这里通过重新调用 handleMainSelectAll 来更新
+              // 更好的方式是在 useFileSelection 中暴露 setSelectedFileIds
             }}
             onFileClick={onFileClick || (() => {})}
             searchKeyword={searchKeyword}

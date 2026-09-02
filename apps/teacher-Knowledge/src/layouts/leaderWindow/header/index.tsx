@@ -31,7 +31,7 @@ const HeaderComponent = () => {
             onClick: () => navigate('/workbench/teacherInfo'),
         },
         {
-            key: 'profile',
+            key: 'radarChart',
             icon: <RadarChartOutlined />,
             label: '教学画像',
             onClick: () => navigate('/workbench/teacherPortrait'),
