@@ -2,8 +2,6 @@
 import React from 'react';
 import { Button, Input, Tag } from 'antd';
 import { PermissionDropdown } from './PermissionDropdown';
-import { useDocumentPermission } from '../hooks/useDocumentPermission';
-import { DEFAULT_DOCUMENT } from '../constants';
 import { useNavigate } from 'react-router-dom';
 
 interface DocumentHeaderProps {
@@ -21,6 +19,8 @@ interface DocumentHeaderProps {
     isSaving: boolean
   };
   handleSave: () => void;
+  permission: 'school' | 'grade' | 'class' | 'personal';
+  onPermissionChange: (permission: 'school' | 'grade' | 'class' | 'personal') => void;
 }
 
 export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
@@ -28,11 +28,10 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   onTitleChange,
   handleSave,
   metadata,
+  permission,
+  onPermissionChange,
 }) => {
     const navigate = useNavigate();
-    const { permission, changePermission } = useDocumentPermission(
-        DEFAULT_DOCUMENT.permission
-    );
     return (
         <div className="mb-6 pb-4 border-b border-gray-200 flex-shrink-0">
         <div className='flex item-center gap-[10px]'>
@@ -44,7 +43,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             />
             <PermissionDropdown
                 currentPermission={permission}
-                onChange={changePermission}
+                onChange={onPermissionChange}
                 trigger={
                 <button className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-lg hover:bg-gray-100 min-w-[100px]">
                     🔐 {permission === 'school' ? '学校' : permission === 'grade' ? '年级' : permission === 'class' ? '班级' : '个人'} ▼

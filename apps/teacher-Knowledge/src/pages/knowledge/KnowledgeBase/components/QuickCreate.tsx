@@ -2,12 +2,10 @@
 import React from 'react';
 import {
   FileTextOutlined,
-  TableOutlined,
-  VideoCameraOutlined,
-  AudioOutlined,
   FileOutlined,
-  CameraOutlined,
   PlusOutlined,
+  SnippetsOutlined,
+  HighlightOutlined,
 } from '@ant-design/icons';
 
 export interface CreateItem {
@@ -34,38 +32,24 @@ const defaultItems: CreateItem[] = [
     color: 'hover:border-blue-400 hover:bg-blue-50',
   },
   {
-    key: 'sheet',
-    icon: <TableOutlined className="text-2xl text-green-500" />,
-    name: '新建表格',
-    desc: 'Excel / 数据表',
-    color: 'hover:border-green-400 hover:bg-green-50',
-  },
-  {
     key: 'video',
-    icon: <VideoCameraOutlined className="text-2xl text-purple-500" />,
-    name: '上传视频',
-    desc: 'MP4 / 教学录像',
+    icon: <HighlightOutlined className="text-2xl text-purple-500" />,
+    name: '上传试卷',
+    desc: 'PDF / PPT / Word',
     color: 'hover:border-purple-400 hover:bg-purple-50',
   },
   {
-    key: 'audio',
-    icon: <AudioOutlined className="text-2xl text-pink-500" />,
-    name: '上传音频',
-    desc: 'MP3 / 听力材料',
-    color: 'hover:border-pink-400 hover:bg-pink-50',
-  },
-  {
-    key: 'file',
+    key: 'file_j',
     icon: <FileOutlined className="text-2xl text-orange-500" />,
-    name: '上传文件',
+    name: '上传教案',
     desc: 'PDF / PPT / Word',
     color: 'hover:border-orange-400 hover:bg-orange-50',
   },
   {
-    key: 'photo',
-    icon: <CameraOutlined className="text-2xl text-red-500" />,
-    name: '拍照批改',
-    desc: 'AI 智能批改',
+    key: 'file_k',
+    icon: <SnippetsOutlined className="text-2xl text-red-500" />,
+    name: '上传课件',
+    desc: 'PDF / PPT / Word',
     color: 'hover:border-red-400 hover:bg-red-50',
   },
 ];
@@ -85,7 +69,7 @@ export const QuickCreate: React.FC<QuickCreateProps> = ({
       </div>
 
       {/* 创建项网格 */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {items.map((item) => (
           <div
             key={item.key}

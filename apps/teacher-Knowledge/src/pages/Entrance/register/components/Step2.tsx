@@ -1,64 +1,102 @@
-// src/components/Register/Step2.tsx
-
 import React from 'react';
+import { ImageCaptchaField, type ImageCaptchaValue } from '@/components/ImageCaptchaField';
+import { HumanVerifySlider } from '@/components/HumanVerifySlider';
 
 interface Step2Props {
   formData: any;
+  formErrors: Record<string, string>;
   setCurrentStep: (step: number) => void;
-  setTotpEnabled: (enabled: boolean) => void;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   isLoading: boolean;
   handleRegister: () => void;
+  captcha: ImageCaptchaValue;
+  setCaptcha: (value: ImageCaptchaValue) => void;
+  captchaNonce: number;
+  humanToken: string;
+  setHumanToken: (value: string) => void;
+  humanNonce: number;
 }
 
+/**
+ * 能力：注册第二步 — 邮箱 + 图片验证码 + 人机滑块。
+ * 输入：表单状态与回调。
+ * 输出：提交注册。
+ */
 const Step2: React.FC<Step2Props> = ({
   formData,
+  formErrors,
   setCurrentStep,
-  setTotpEnabled,
-  canvasRef,
+  handleInputChange,
   isLoading,
   handleRegister,
+  captcha,
+  setCaptcha,
+  captchaNonce,
+  humanToken,
+  setHumanToken,
+  humanNonce,
 }) => {
   return (
     <>
-      {/* TOTP 双因素认证绑定 */}
       <div className="bg-gray-50 rounded-xl p-4 my-4 border border-gray-200">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🔐</span>
-          <span className="text-sm font-semibold text-gray-800">绑定二次验证（推荐）</span>
-          <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-auto">等保三级</span>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">✉️</span>
+          <span className="text-sm font-semibold text-gray-800">邮箱确认</span>
         </div>
-        <p className="text-sm text-gray-400 my-1 mb-3">使用 Google Authenticator 或 Microsoft Authenticator 扫描下方二维码</p>
-        
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <div className="flex flex-col items-center gap-1.5">
-            <canvas ref={canvasRef} width="120" height="120" className="bg-white rounded-lg border border-gray-200" />
-            <div className="text-xs text-gray-500">
-              <span>密钥：</span>
-              <code className="bg-gray-200 px-2 py-0.5 rounded font-mono text-sm tracking-wide">
-                {formData.totpSecret || 'ABCD-EFGH-IJKL-MNOP'}
-              </code>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="text-sm text-gray-600">📲 打开 Authenticator APP</div>
-            <div className="text-sm text-gray-600">📷 扫描二维码或手动输入密钥</div>
-            <div className="text-sm text-gray-600">✅ 绑定后每次登录需输入动态码</div>
-          </div>
-        </div>
+        <p className="text-sm text-gray-400 mb-3">
+          注册成功后将向邮箱发送确认链接，点击后才算注册完成。手机号{' '}
+          <span className="font-medium text-gray-700">{formData.phone}</span>
+        </p>
 
-        <div className="text-center mt-2.5">
-          <button
-            type="button"
-            className="bg-none border-none text-gray-400 text-sm cursor-pointer font-sans hover:text-blue-500 transition-colors"
-            onClick={() => setTotpEnabled(false)}
-          >
-            ⏭️ 稍后绑定（不推荐）
-          </button>
+        <label className="block text-sm font-medium text-gray-800 mb-1">
+          邮箱 <span className="text-red-500">*</span>
+        </label>
+        <div
+          className={`
+            flex items-center border-2 rounded-xl transition-all duration-200 bg-white mb-3
+            ${formErrors.email ? 'border-red-500' : 'border-gray-200 focus-within:border-blue-500'}
+          `}
+        >
+          <input
+            type="email"
+            name="email"
+            placeholder="请输入常用邮箱"
+            value={formData.email || ''}
+            onChange={handleInputChange}
+            className="w-full py-2.5 px-3 border-none bg-transparent text-sm text-gray-800 outline-none"
+          />
         </div>
+        {formErrors.email && (
+          <span className="text-xs text-red-500 mt-1 mb-2 block">{formErrors.email}</span>
+        )}
+
+        <label className="block text-sm font-medium text-gray-800 mb-1">
+          图片验证码 <span className="text-red-500">*</span>
+        </label>
+        <ImageCaptchaField
+          key={captchaNonce}
+          value={captcha}
+          onChange={setCaptcha}
+          disabled={isLoading}
+        />
+        {formErrors.captcha && (
+          <span className="text-xs text-red-500 mt-1 mb-3 block">{formErrors.captcha}</span>
+        )}
+
+        <label className="block text-sm font-medium text-gray-800 mb-1 mt-3">
+          人机验证 <span className="text-red-500">*</span>
+        </label>
+        <HumanVerifySlider
+          key={humanNonce}
+          value={humanToken}
+          onChange={setHumanToken}
+          disabled={isLoading}
+        />
+        {formErrors.human && (
+          <span className="text-xs text-red-500 mt-1 block">{formErrors.human}</span>
+        )}
       </div>
 
-      {/* 注册按钮 */}
       <button
         className={`
           w-full py-3 bg-gradient-to-r from-blue-500 to-blue-400 border-none rounded-xl text-sm font-semibold text-white cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(22,119,255,0.35)] font-sans
@@ -67,10 +105,9 @@ const Step2: React.FC<Step2Props> = ({
         onClick={handleRegister}
         disabled={isLoading}
       >
-        {isLoading ? '⏳ 注册中...' : '✅ 完成注册'}
+        {isLoading ? '⏳ 提交中...' : '📨 提交注册并发送确认邮件'}
       </button>
 
-      {/* 返回上一步 */}
       <button
         className="block bg-none border-none text-gray-400 text-sm cursor-pointer mx-auto mt-3 font-sans hover:text-blue-500 transition-colors"
         onClick={() => setCurrentStep(1)}

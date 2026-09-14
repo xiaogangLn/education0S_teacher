@@ -7,9 +7,10 @@ import { type StudentStats as StudentStatsType } from '../types';
 
 interface StudentStatsProps {
   stats: StudentStatsType;
+  showTransferStat?: boolean;
 }
 
-const StudentStats: React.FC<StudentStatsProps> = ({ stats }) => {
+const StudentStats: React.FC<StudentStatsProps> = ({ stats, showTransferStat = true }) => {
   return (
     <div className="flex-shrink-0">
       <Row
@@ -49,14 +50,16 @@ const StudentStats: React.FC<StudentStatsProps> = ({ stats }) => {
             valueStyle={{ color: '#f59e0b', fontSize: '20px' }}
           />
         </Col>
-        <Col xs={12} sm={8} md={6}>
-          <Statistic
-            title="有换班记录"
-            value={stats.hasTransfer}
-            valueStyle={{ color: '#3b82f6', fontSize: '20px' }}
-            prefix={<SwapOutlined />}
-          />
-        </Col>
+        {showTransferStat ? (
+          <Col xs={12} sm={8} md={6}>
+            <Statistic
+              title="有换班记录"
+              value={stats.hasTransfer}
+              valueStyle={{ color: '#3b82f6', fontSize: '20px' }}
+              prefix={<SwapOutlined />}
+            />
+          </Col>
+        ) : null}
       </Row>
     </div>
   );

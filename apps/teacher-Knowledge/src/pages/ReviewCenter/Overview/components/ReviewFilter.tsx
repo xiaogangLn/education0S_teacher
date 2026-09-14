@@ -58,8 +58,8 @@ export const ReviewFilter: React.FC<ReviewFilterProps> = ({
         重置
       </Button>
       {onBatch && (
-        <Button className="rounded-full ml-auto" disabled={loading}>
-          📋 批量操作
+        <Button className="rounded-full ml-auto" disabled={loading} onClick={onBatch}>
+          📋 批量通过
         </Button>
       )}
     </div>

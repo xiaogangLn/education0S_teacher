@@ -1,5 +1,3 @@
-// src/components/Register/index.tsx
-
 import React from 'react';
 import { useRegister } from './hooks/useRegister';
 import StepIndicator from './components/StepIndicator';
@@ -19,20 +17,23 @@ const Register: React.FC = () => {
     setShowPassword,
     showConfirmPassword,
     setShowConfirmPassword,
-    totpEnabled,
-    setTotpEnabled,
-    canvasRef,
     handleInputChange,
+    toggleSubject,
     handleNextStep,
     handleRegister,
+    captcha,
+    setCaptcha,
+    captchaNonce,
+    humanToken,
+    setHumanToken,
+    humanNonce,
+    debugConfirmUrl,
   } = useRegister();
 
   return (
     <div className="w-full max-h-[90vh] overflow-y-auto  flex-shrink-0 ">
-      {/* 步骤指示器 */}
       {currentStep < 3 && <StepIndicator currentStep={currentStep} />}
 
-      {/* 表单内容 */}
       <div className="min-h-[380px]">
         {currentStep === 1 && (
           <Step1
@@ -44,28 +45,32 @@ const Register: React.FC = () => {
             setShowConfirmPassword={setShowConfirmPassword}
             setFormData={setFormData}
             handleInputChange={handleInputChange}
+            toggleSubject={toggleSubject}
             handleNextStep={handleNextStep}
           />
         )}
         {currentStep === 2 && (
           <Step2
             formData={formData}
+            formErrors={formErrors}
             setCurrentStep={setCurrentStep}
-            setTotpEnabled={setTotpEnabled}
-            canvasRef={canvasRef}
+            handleInputChange={handleInputChange}
             isLoading={isLoading}
             handleRegister={handleRegister}
+            captcha={captcha}
+            setCaptcha={setCaptcha}
+            captchaNonce={captchaNonce}
+            humanToken={humanToken}
+            setHumanToken={setHumanToken}
+            humanNonce={humanNonce}
           />
         )}
         {currentStep === 3 && (
-          <Step3
-            formData={formData}
-            totpEnabled={totpEnabled}
-          />
+          <Step3 formData={formData} debugConfirmUrl={debugConfirmUrl} />
         )}
       </div>
     </div>
   );
 };
 
-export {Register};
+export { Register };

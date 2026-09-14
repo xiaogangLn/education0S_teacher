@@ -14,6 +14,7 @@ interface FileListProps {
   allChecked?: boolean;
   indeterminate?: boolean;
   selectedCount?: number;
+  emptyDescription?: string;
 }
 
 export const FileList: React.FC<FileListProps> = ({
@@ -24,12 +25,13 @@ export const FileList: React.FC<FileListProps> = ({
   searchKeyword = '',
   showSelectAll = false,
   selectedCount = 0,
+  emptyDescription,
 }) => {
   if (files.length === 0) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={searchKeyword.trim() ? '未找到匹配文件' : '暂无文件'}
+        description={emptyDescription || (searchKeyword.trim() ? '未找到匹配文件' : '暂无文件')}
         className="mt-8"
       />
     );

@@ -1,0 +1,193 @@
+# EducationOS V8.0 接口清单（含备注说明）
+
+
+## 一、认证模块 (Auth)
+
+POST /api/v1/auth/login                        - 用户登录，手机号+密码，返回JWT令牌
+POST /api/v1/auth/refresh                      - 刷新JWT访问令牌
+POST /api/v1/auth/logout                       - 用户登出，撤销令牌
+GET /api/v1/auth/me                            - 获取当前登录用户信息
+PUT /api/v1/auth/password                      - 修改当前用户密码
+POST /api/v1/auth/password/reset               - 管理员重置用户密码
+POST /api/v1/auth/code/send                    - 发送短信/邮箱验证码
+POST /api/v1/auth/code/verify                  - 验证验证码有效性
+
+
+## 二、用户管理模块 (Users)
+
+GET /api/v1/users                               - 分页查询用户列表（支持关键词/角色/状态筛选）
+GET /api/v1/users/{id}                          - 获取单个用户详情
+POST /api/v1/users                              - 创建新用户
+PUT /api/v1/users/{id}                          - 更新用户信息
+DELETE /api/v1/users/{id}                       - 删除用户
+POST /api/v1/users/{id}/deactivate              - 停用用户账号
+POST /api/v1/users/{id}/activate                - 启用用户账号
+POST /api/v1/users/import                       - Excel批量导入用户
+GET /api/v1/users/import/template               - 下载用户导入Excel模板
+GET /api/v1/users/export                        - 导出用户列表
+
+
+## 三、组织管理模块 (Org)
+
+GET /api/v1/organizations/schools               - 获取学校列表
+POST /api/v1/organizations/schools              - 创建学校
+PUT /api/v1/organizations/schools/{id}          - 更新学校信息
+GET /api/v1/organizations/grades                - 获取年级列表
+POST /api/v1/organizations/grades               - 创建年级
+GET /api/v1/organizations/classes               - 获取班级列表
+POST /api/v1/organizations/classes              - 创建班级
+PUT /api/v1/organizations/classes/{id}          - 更新班级信息
+
+
+## 四、学生管理模块 (Students)
+
+GET /api/v1/students                             - 分页查询学生列表（支持班级/年级/状态筛选）
+GET /api/v1/students/{id}                        - 获取学生完整信息（含换班记录/能力/画像）
+POST /api/v1/students                            - 创建学生
+PUT /api/v1/students/{id}                        - 更新学生信息【暂时不需要】
+POST /api/v1/students/{id}/transfer              - 学生换班操作
+GET /api/v1/students/{id}/transfers              - 获取学生换班历史
+GET /api/v1/students/class/{class_id}            - 获取班级所有学生
+POST /api/v1/students/import                     - Excel批量导入学生
+GET /api/v1/students/import/template             - 下载学生导入模板
+GET /api/v1/students/export                      - 导出学生数据 【暂时不需要】
+GET /api/v1/students/{id}/portrait               - 获取学生画像数据
+GET /api/v1/students/{id}/scores                 - 获取学生成绩汇总
+
+
+## 五、知识库模块 (Knowledge)
+
+GET /api/v1/knowledge/documents                  - 分页查询文档列表（支持类型/权限/分类筛选）
+GET /api/v1/knowledge/documents/{id}             - 获取单个文档详情（含评论/标签）
+POST /api/v1/knowledge/documents                 - 上传/创建文档
+PUT /api/v1/knowledge/documents/{id}             - 更新文档内容
+DELETE /api/v1/knowledge/documents/{id}          - 删除文档
+GET /api/v1/knowledge/folders                    - 获取知识库文件夹 【暂时不需要】
+POST /api/v1/knowledge/folders                   - 创建文件夹【暂时不需要】
+GET /api/v1/knowledge/permissions                - 获取权限层级列表（学校/年级/班级/个人）
+PUT /api/v1/knowledge/documents/{id}/permission  - 更新文档权限
+GET /api/v1/knowledge/categories                 - 获取知识库分类
+POST /api/v1/knowledge/categories                - 创建分类 【分类固定（学校、年纪、班级、个人）】
+GET /api/v1/knowledge/search                     - 全文搜索文档
+POST /api/v1/knowledge/documents/{id}/favorite   - 收藏/取消收藏文档
+GET /api/v1/knowledge/favorites                  - 获取收藏文档列表
+GET /api/v1/knowledge/recent                     - 获取最近访问文档
+
+
+## 六、拍照批改模块 (Grading)
+
+POST /api/v1/knowledge/grading/photo             - 拍照上传并AI批改（含OCR识别/字迹分析）
+GET /api/v1/knowledge/grading/{id}               - 获取批改详情
+GET /api/v1/knowledge/grading/list               - 获取批改记录列表
+PUT /api/v1/knowledge/grading/{id}/confirm       - 教师确认批改结果
+PUT /api/v1/knowledge/grading/{id}/update        - 教师修改批改结果
+
+
+## 七、成绩管理模块 (Exam)
+
+GET /api/v1/exam/records                         - 获取考试成绩列表（支持学生/班级/学科筛选）
+GET /api/v1/exam/records/{id}                    - 获取考试成绩详情（含知识点分析）
+POST /api/v1/exam/records                        - 录入单条成绩
+POST /api/v1/exam/records/import                 - Excel批量导入成绩
+GET /api/v1/exam/student/{student_id}            - 获取学生所有成绩
+GET /api/v1/exam/class/{class_id}                - 获取班级成绩汇总
+GET /api/v1/exam/records/export                  - 导出成绩数据
+
+
+
+## 八、加工台模块 (Processing) - 五阶段交互
+
+POST /api/v1/processing/tasks                    - 创建教案生成任务（阶段1：初始化）
+GET /api/v1/processing/tasks/{id}                - 获取生成任务详情
+GET /api/v1/processing/tasks                     - 获取生成任务列表（支持状态/学科筛选）
+GET /api/v1/processing/tasks/{id}/analysis       - 获取学情分析报告（阶段2）
+POST /api/v1/processing/tasks/{id}/analysis/confirm - 教师确认学情分析
+POST /api/v1/processing/tasks/{id}/outline/generate - AI生成教案大纲（阶段3）
+POST /api/v1/processing/tasks/{id}/outline/adjust    - 教师调整大纲
+POST /api/v1/processing/tasks/{id}/content/generate  - AI填充完整内容（阶段4）
+PUT /api/v1/processing/tasks/{id}/content/update     - 教师修改内容
+POST /api/v1/processing/tasks/{id}/refine        - AI润色精修（阶段5）
+POST /api/v1/processing/tasks/{id}/complete      - 教师最终确认完成
+POST /api/v1/processing/tasks/{id}/adjust        - 对话式调整任意阶段
+GET /api/v1/processing/tasks/{id}/stream/{stage} - 五阶段SSE流式推送
+POST /api/v1/processing/tasks/{id}/submit        - 提交教案审批
+GET  /api/v1/processing/tasks/{id}/approval-status - 获取审批状态
+POST /api/v1/processing/tasks/{id}/draft         - 存入草稿箱
+GET /api/v1/processing/tasks/{id}/versions       - 获取版本历史列表
+POST /api/v1/processing/tasks/{id}/versions/{version}/restore - 恢复指定版本
+
+
+## 九、审批模块 (Review)
+
+GET /api/v1/review/pending                       - 获取待审核任务列表
+GET /api/v1/review/list                          - 获取所有审核记录（支持状态/类型筛选）
+GET /api/v1/review/{id}                          - 获取审核详情（含版本历史/批注）
+POST /api/v1/review/{id}/approve                 - 审批通过
+POST /api/v1/review/{id}/reject                  - 审批驳回（需填写原因）
+POST /api/v1/review/{id}/comment                 - 添加审核批注
+GET /api/v1/review/{id}/comments                 - 获取审核批注列表
+GET /api/v1/review/stats                         - 获取审核统计信息（待审/通过/驳回/通过率）
+POST /api/v1/review/batch                        - 批量审批操作
+
+
+## 十、学习记录模块 (Learning)
+
+GET /api/v1/learning/records                     - 分页获取学习记录（支持学生/班级/状态筛选）
+GET /api/v1/learning/records/{id}                - 获取学习记录详情（含题目/答案/AI批改）
+POST /api/v1/learning/records                    - 创建单条学习记录
+POST /api/v1/learning/records/batch              - 为全班学生创建学习记录（含必做题+个性化题）
+PUT /api/v1/learning/records/{id}/submit         - 提交作业（含图片+课堂评价）
+PUT /api/v1/learning/records/{id}/grade          - 批改作业（逐题批改+反馈）
+POST /api/v1/learning/records/{id}/images        - 上传作业图片
+GET /api/v1/learning/records/student/{student_id} - 获取学生所有学习记录
+GET /api/v1/learning/records/class/{class_id}    - 获取班级学习记录汇总
+GET /api/v1/learning/records/export              - 导出学习记录
+
+
+## 十一、画像模块 (Portrait)
+
+GET /api/v1/portraits/student/{student_id}       - 获取学生五维画像（学业/能力/行为/心理/成长）
+GET /api/v1/portraits/teacher/{teacher_id}       - 获取教师四维画像（教学/教研/效果/成长）
+GET /api/v1/portraits/stats                      - 获取画像统计信息
+GET /api/v1/portraits/class/{class_id}           - 获取班级画像汇总
+GET /api/v1/portraits/student/{student_id}/abilities - 获取能力雷达数据（布鲁姆六层）
+GET /api/v1/portraits/student/{student_id}/growth    - 获取成长轨迹数据
+GET /api/v1/portraits/student/{student_id}/recommendations - AI生成学习建议
+
+
+
+## 十二、趋势预测模块 (Prediction)
+
+GET /api/v1/predict/stream                      - 趋势预测SSE流式推送（含分析/计算/预警/建议）
+GET /api/v1/predict/report                      - 获取完整预测报告
+GET /api/v1/predict/export                      - 导出预测数据
+
+
+## 十三、数据导出模块 (Export)
+
+POST /api/v1/export                              - 创建数据导出任务（支持多范围/多格式）
+GET /api/v1/export/tasks/{task_id}               - 查询导出任务进度
+GET /api/v1/export/tasks                         - 获取历史导出任务列表
+GET /api/v1/export/download/{task_id}            - 下载导出文件
+DELETE /api/v1/export/tasks/{task_id}            - 删除导出任务
+GET /api/v1/export/templates                     - 获取导出模板预设
+
+
+## 十四、管理驾驶舱模块 (Dashboard)
+
+GET /api/v1/dashboard/overview                  - 获取驾驶舱总览数据（统计/趋势/预警）
+GET /api/v1/dashboard/trend                     - 获取年级趋势对比数据
+GET /api/v1/dashboard/class/{class_id}          - 获取班级学情数据
+GET /api/v1/dashboard/stats                     - 获取统计卡片数据（学生/文档/任务）
+GET /api/v1/dashboard/activities                - 获取最近动态列表
+
+
+## 十五、作业打印分发模块 (Assignment)
+
+POST /api/v1/assignment/generate-pdf            - 生成作业PDF（含必做题+个性化题）
+GET /api/v1/assignment/preview/{task_id}        - 获取作业预览
+PUT /api/v1/assignment/distribute/{record_id}   - 标记作业已分发
+GET /api/v1/assignment/download/{record_id}     - 下载作业PDF文件
+
+## 全局搜索接口
+GET /api/v1/search/global                      - 全局搜索（学生/文档/教案/记录）

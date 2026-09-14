@@ -21,6 +21,25 @@ export interface AppState {
   modalOpen: boolean;
   modalType: string | null;
   modalProps: Record<string, any>;
+  org: {
+    gradeId?: string;
+    classId?: string;
+    gradeName?: string;
+    className?: string;
+    studentCount?: number;
+    enrollmentYear?: string;
+  };
+}
+
+const ORG_KEY = 'orgContext';
+
+function loadOrg() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(ORG_KEY) || '{}');
+  } catch {
+    return {};
+  }
 }
 
 const initialState: AppState = {
@@ -33,6 +52,7 @@ const initialState: AppState = {
   modalOpen: false,
   modalType: null,
   modalProps: {},
+  org: loadOrg(),
 };
 
 const appSlice = createSlice({
@@ -89,6 +109,12 @@ const appSlice = createSlice({
       state.modalType = null;
       state.modalProps = {};
     },
+    setOrgContext: (state, action: PayloadAction<Partial<AppState['org']>>) => {
+      state.org = { ...state.org, ...action.payload };
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(ORG_KEY, JSON.stringify(state.org));
+      }
+    },
   },
 });
 
@@ -104,6 +130,7 @@ export const {
   setBreadcrumbs,
   openModal,
   closeModal,
+  setOrgContext,
 } = appSlice.actions;
 
 export default appSlice.reducer;

@@ -22,3 +22,12 @@ export interface FileItem {
     onFileClick?: (file: FileItem) => void;
     className?: string;
   }
+
+  export interface LeftPanelProps {
+    onFileSelect?: (selectedIds: string[]) => void;
+    onFileClick?: (file: FileItem) => void;
+    onSelectedFiles?: (files: FileItem[]) => void;  // 新增：选中文件回调
+    initialPlannedFiles?: FileItem[];
+    historyMode?: boolean;
+    className?: string;
+  }

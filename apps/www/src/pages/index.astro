@@ -1,0 +1,165 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PromptBar from '@/components/PromptBar.astro';
+import { homeReasons, links, siteConfig } from '@/lib/site';
+---
+
+<BaseLayout
+  title={`${siteConfig.name} · ${siteConfig.tagline}`}
+  description={siteConfig.description}
+  path="/"
+>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="copy">
+        <h1 class="reveal">
+          <span class="brand">{siteConfig.name}</span>
+          <span class="tagline">
+            给老师的 <em>AI</em> 教学工作台
+          </span>
+        </h1>
+        <p class="chips reveal reveal-delay-1">
+          五阶段生成 · 个人习惯 · 组卷批改 · 学情画像 · OpenMAIC
+        </p>
+        <p class="lead muted reveal reveal-delay-1">
+          从备课到阅卷连成闭环，生成会贴近你的教案习惯，让每一次决策更高效、更懂学生。
+        </p>
+        <div class="cta reveal reveal-delay-2">
+          <a class="btn btn-primary" href={links.start}>开始使用 →</a>
+          <a class="btn btn-ghost" href="/schools">学校合作</a>
+        </div>
+      </div>
+      <PromptBar />
+    </div>
+  </section>
+
+  <section class="section reasons" aria-labelledby="why-title">
+    <div class="container">
+      <div class="why-head reveal">
+        <span class="dot" aria-hidden="true"></span>
+        <h2 id="why-title" class="section-title">为什么是 EducationOS</h2>
+      </div>
+      <ol class="reason-list">
+        {
+          homeReasons.map((item, i) => (
+            <li class={`reveal reveal-delay-${(i % 4) + 1}`}>
+              <span class="n">{item.n}</span>
+              <div>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 5.5rem 0 3rem;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  h1 {
+    margin: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .brand {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 750;
+    letter-spacing: -0.04em;
+  }
+
+  .tagline {
+    font-size: clamp(1.55rem, 3vw, 2.15rem);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .tagline em {
+    font-style: normal;
+    color: var(--aqua);
+  }
+
+  .chips {
+    margin: 1.1rem 0 0.55rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .lead {
+    margin: 0;
+    max-width: 28rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.6rem;
+  }
+
+  .why-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--aqua);
+    box-shadow: 0 0 16px var(--aqua-glow);
+  }
+
+  .reason-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .reason-list li {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1rem;
+    align-items: start;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .n {
+    color: var(--aqua);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .reason-list h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1.15rem;
+  }
+
+  .reason-list p {
+    margin: 0;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 860px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

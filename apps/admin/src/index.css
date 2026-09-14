@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --focus-border: #007fd4;
+    --sash-size: 15px;
+    --sash-hover-size: 4px;
+}
+
+/* 覆盖 Allotment 分割线样式 */
+.allotment-module_separatorBorder_x-rDs .sash {
+    background-color: #F0F4F9 !important;
+    width: 10px !important;
+    min-width: 10px !important;
+}
+
+/* 或者使用更精确的选择器 */
+.split-view-separator-border .sash {
+    background-color: #F0F4F9 !important;
+}
+
+/* 分割线 hover 状态 */
+.split-view-separator-border .sash:hover {
+    background-color: #e8edf5 !important;
+}
+
+/* 拖拽时的状态 */
+.split-view-separator-border .sash.dragging {
+    background-color: #d0d8e8 !important;
+}
+
+/* 分割线内的小手柄（装饰） */
+.split-view-separator-border .sash .sash-handle {
+    background-color: #d1d5db !important;
+    width: 2px !important;
+    border-radius: 2px !important;
+}
+
+.split-view-separator-border .sash .sash-handle:hover {
+    background-color: #3b82f6 !important;
+}

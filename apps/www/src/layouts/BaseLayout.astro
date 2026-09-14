@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import Ambient from '@/components/Ambient.astro';
+import { siteConfig, siteUrl } from '@/lib/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  path?: string;
+  ogType?: string;
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  path = '/',
+  ogType = 'website',
+} = Astro.props;
+
+const pageTitle = title.includes(siteConfig.name) ? title : `${title} · ${siteConfig.name}`;
+const canonical = new URL(path, `${siteUrl}/`).toString();
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: siteConfig.name,
+      url: siteUrl,
+      description: siteConfig.description,
+    },
+    {
+      '@type': 'WebSite',
+      name: siteConfig.name,
+      url: siteUrl,
+      inLanguage: siteConfig.locale,
+      description: siteConfig.description,
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: siteConfig.name,
+      applicationCategory: 'EducationalApplication',
+      operatingSystem: 'Web',
+      description: siteConfig.description,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'CNY',
+      },
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <Ambient />
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      const nodes = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-in');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+        );
+        nodes.forEach((el) => io.observe(el));
+      } else {
+        nodes.forEach((el) => el.classList.add('is-in'));
+      }
+    </script>
+  </body>
+</html>

@@ -18,7 +18,17 @@ import DetailedReportPage from '@/pages/LeaderWindow/Predict';
 import TrendPredictionPage from '@/pages/LeaderWindow/TrendPrediction';
 import { MainLayoutReview } from '@/layouts/review/MainLayout';
 import ReviewCenterPage from '@/pages/ReviewCenter/Overview';
-
+import LessonPlanDetailPage from '@/pages/workbench/LessonPlanDetail';
+import StudentLearningRecordsPage from '@/pages/workbench/StudentLearningRecords';
+import CoursewareDetailPage from '@/pages/workbench/CoursewareDetail';
+import ExamDetailPage from '@/pages/workbench/ExamDetail';
+import SmartGradingPage from '@/pages/workbench/SmartGrading';
+import GradeUploadPage from '@/pages/mobile/GradeUpload';
+import { RequireAuth } from '@/components/RequireAuth';
+import { RequireStudentManage } from '@/components/RequireStudentManage';
+import { RequireReviewCenter } from '@/components/RequireReviewCenter';
+import { PrivacyPolicyPage, TermsOfServicePage } from '@/pages/Legal';
+import ConfirmEmailPage from '@/pages/Entrance/ConfirmEmail';
 
 export const router = createBrowserRouter([
     {
@@ -26,8 +36,28 @@ export const router = createBrowserRouter([
         element: <EducationOSEntrance />,
     },
     {
+        path: '/auth/confirm-email',
+        element: <ConfirmEmailPage />,
+    },
+    {
+        path: '/legal/terms',
+        element: <TermsOfServicePage />,
+    },
+    {
+        path: '/legal/privacy',
+        element: <PrivacyPolicyPage />,
+    },
+    {
+        path: '/m/grade/:token',
+        element: <GradeUploadPage />,
+    },
+    {
         path: '/workbench',
-        element: <MainLayoutWorkbench />,
+        element: (
+            <RequireAuth>
+                <MainLayoutWorkbench />
+            </RequireAuth>
+        ),
         children: [
             {
                 index: true,
@@ -46,22 +76,72 @@ export const router = createBrowserRouter([
                 element: <HistoryOrderComponent />,
             },
             {
+                path: 'lessonPlanDetail',
+                element: <LessonPlanDetailPage />,
+            },
+            {
                 path: 'studentList',
-                element: <StudentList />,
+                element: (
+                    <RequireStudentManage>
+                        <StudentList />
+                    </RequireStudentManage>
+                ),
             },
             {
                 path: 'studentPortrait',
-                element: <StudentPortraitPage />,
+                element: (
+                    <RequireStudentManage>
+                        <StudentPortraitPage />
+                    </RequireStudentManage>
+                ),
             },
             {
                 path: 'teacherPortrait',
                 element: <TeacherPortraitMini />
+            },
+            {
+                path: 'studentLearningRecords',
+                element: (
+                    <RequireStudentManage>
+                        <StudentLearningRecordsPage />
+                    </RequireStudentManage>
+                ),
+            },
+            {
+                path: 'coursewareDetail',
+                element: <CoursewareDetailPage />
+            },
+            {
+                path: 'examDetail',
+                element: <ExamDetailPage />
+            },
+            {
+                path: 'smartGrading',
+                element: <SmartGradingPage />
             }
         ],
     },
     {
+        path: '/smartGrading',
+        element: (
+            <RequireAuth>
+                <MainLayoutWorkbench />
+            </RequireAuth>
+        ),
+        children: [
+            {
+                index: true,
+                element: <SmartGradingPage />,
+            },
+        ],
+    },
+    {
         path: '/knowledge',
-        element: <MainLayoutKnowledge />,
+        element: (
+            <RequireAuth>
+                <MainLayoutKnowledge />
+            </RequireAuth>
+        ),
         children: [
             {
                 index: true,
@@ -79,7 +159,11 @@ export const router = createBrowserRouter([
     },
     {
         path: '/leaderWindow',
-        element: <MainLayoutLeaderWindow />,
+        element: (
+            <RequireAuth>
+                <MainLayoutLeaderWindow />
+            </RequireAuth>
+        ),
         children: [
             {
                 index: true,
@@ -93,16 +177,22 @@ export const router = createBrowserRouter([
                 path: 'trendPrediction',
                 element: <TrendPredictionPage />
             }
-        ] 
+        ]
     },
     {
         path: 'reviewCenter',
-        element: <MainLayoutReview />,
+        element: (
+            <RequireAuth>
+                <RequireReviewCenter>
+                    <MainLayoutReview />
+                </RequireReviewCenter>
+            </RequireAuth>
+        ),
         children: [
             {
                 index: true,
                 element: <ReviewCenterPage />,
             }
-        ] 
+        ]
     }
 ])

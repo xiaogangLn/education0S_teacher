@@ -179,21 +179,26 @@ const coursewareSteps: StepData[] = [
     confirmText: '确认分析',
     content: `## 📊 内容分析
 
-### 知识点结构
-1. 二次函数定义
-2. 图像特征（开口、对称轴、顶点）
-3. 系数 a、b、c 对图像的影响
-4. 图像平移变换
+<callout type="info" title="围绕学情与教师能力做教学判断">
+先看清学生、课、知识问题和老师适合怎么上，再决定课件怎么设计
+</callout>
 
-### 学生认知难点
-- 系数 a 与开口方向的关系
-- 顶点坐标的推导
-- 图像平移规律
+### 学生分析
+- **掌握度**: 68%
+- **分层**: A层12人 · B层20人 · C层13人
+- **已会**: 能画出二次函数草图
+- **卡住**: 系数对图像的影响说不清，C 层仍把顶点公式当记忆题
 
-### 教学目标
-- **知识与技能**: 掌握二次函数图像特征
-- **过程与方法**: 通过图像观察发现规律
-- **情感态度**: 感受数学之美`,
+### 教学分析
+本课不宜一次讲完定义、图像、平移。先用动态图建立表象，再用对照页突破系数，最后用分层练习检验。
+
+### 当前知识的问题
+- 把开口方向与 a 的正负记反
+- 顶点坐标只会套公式，不会从图上看
+- 平移规律与解析式对不上
+
+### 老师能力的分析
+教师擅长启发式提问与数形结合，适合把关键问句做成可见页；抽象推导环节用图示补足，降低连续讲授压力。`,
   },
   {
     id: 'outline',
@@ -202,25 +207,29 @@ const coursewareSteps: StepData[] = [
     status: 'pending',
     confirmable: true,
     confirmText: '确认框架',
-    content: `## 📌 课件框架
+    content: `## 📌 框架设计
+
+<ai>
+根据内容分析决定怎么教，而不是先列页码
+</ai>
+
+### 教学决策
+- **对学生**: C 层先过关开口与顶点，A 层再做平移与变式
+- **对知识问题**: 用对照页同时显示 a 变化与图像变化，打断死记公式
+- **对老师能力**: 启发提问做成逐步揭示，教师少讲、学生多看图说话
 
 ### 页面结构
-1. **封面页**：标题、作者、年级
-2. **引入页**：生活情境导入
-3. **探究页**：函数图像绘制（交互式）
-4. **规律页**：系数与图像关系
-5. **练习页**：巩固练习
-6. **总结页**：课堂小结
+1. **封面页**：点明本节要解决「系数如何改变图像」
+2. **学习目标页**：按 A/B/C 分层写出可检测目标
+3. **情境导入页**：投篮轨迹引出抛物线
+4. **知识梳理页**：定义 + 图像对照
+5. **探究页**：滑块看 a、b、c（突破知识问题）
+6. **例题页**：从图读顶点与开口
+7. **分层练习页**：C 层识图，A 层平移
+8. **小结页**：回扣三个易错点
 
-### 交互设计
-- 滑块控制系数 a、b、c
-- 实时显示图像变化
-- 点击显示关键点坐标
-
-### 视觉风格
-- 颜色主题：蓝色系 + 橙色点缀
-- 字体：清晰易读
-- 动画：平滑过渡`,
+### 交互与呈现
+滑块实时出图、关键点可点击；颜色只用来对照，不做装饰动画。`,
   },
   {
     id: 'content',
@@ -291,6 +300,54 @@ const coursewareSteps: StepData[] = [
   },
 ];
 
+const examSteps: StepData[] = [
+  {
+    id: 'init',
+    title: '初始化',
+    type: 'init',
+    status: 'pending',
+    confirmable: true,
+    confirmText: '进入学情分析',
+    content: '',
+  },
+  {
+    id: 'analysis',
+    title: '学情分析',
+    type: 'analysis',
+    status: 'pending',
+    confirmable: true,
+    confirmText: '确认学情',
+    content: '',
+  },
+  {
+    id: 'outline',
+    title: '题型与难度',
+    type: 'outline',
+    status: 'pending',
+    confirmable: true,
+    confirmText: '选择题型与题量',
+    content: '',
+  },
+  {
+    id: 'content',
+    title: '试卷定稿',
+    type: 'content',
+    status: 'pending',
+    confirmable: true,
+    confirmText: '确认学生卷，生成参考答案',
+    content: '',
+  },
+  {
+    id: 'refine',
+    title: '精修',
+    type: 'refine',
+    status: 'pending',
+    confirmable: true,
+    confirmText: '完成生成',
+    content: '',
+  },
+];
+
 // 根据模板获取步骤
 export const getMarkdownStepsByTemplate = (template: TemplateType): StepData[] => {
   if (template === '教案模板') {
@@ -299,10 +356,13 @@ export const getMarkdownStepsByTemplate = (template: TemplateType): StepData[] =
   if (template === '课件模板') {
     return coursewareSteps;
   }
+  if (template === '试卷模板') {
+    return examSteps;
+  }
   return [];
 };
 
 // 判断模板是否有步骤
 export const hasStepsByTemplate = (template: TemplateType): boolean => {
-  return ['教案模板', '课件模板'].includes(template);
+  return ['教案模板', '课件模板', '试卷模板'].includes(template);
 };

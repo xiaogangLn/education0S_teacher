@@ -11,6 +11,7 @@ interface ImportMeta {
     readonly VITE_WS_URL?: string;
     readonly VITE_APP_ENV?: string;
     readonly VITE_DEBUG?: string;
-    readonly VITE_APP_TITLE?: string;
+    readonly VITE_PROXY_TARGET?: string;
+    readonly VITE_ENABLE_MSW?: string;
     readonly [key: string]: string | undefined;
   }

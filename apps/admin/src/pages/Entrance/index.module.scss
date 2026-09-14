@@ -1,0 +1,333 @@
+@use "sass:color";
+/* ========================================
+   EducationOS 登录页 - CSS Modules
+   完整样式，覆盖所有 JSX 类名
+   ======================================== */
+
+// ========== 变量 ==========
+$brand-blue: #1677FF;
+$brand-light-blue: #40A9FF;
+$bg-dark: #0a1628;
+$card-bg: rgba(255, 255, 255, 0.96);
+
+// ========================================
+// 右上角注册入口
+// ========================================
+.registerEntry {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #888;
+}
+
+.registerHint {
+  font-size: 13px;
+  color: #999;
+}
+
+.registerBtn {
+  background: none;
+  border: none;
+  color: $brand-blue;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  &:hover {
+    color: color.adjust($brand-blue, $lightness: -10%);;
+    transform: translateX(2px);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// ========== 页面容器 ==========
+.page {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  background: $bg-dark;
+}
+
+// ========== 背景图层 ==========
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: transform 0.3s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      rgba(10, 22, 40, 0.92) 0%,
+      rgba(10, 22, 40, 0.70) 45%,
+      rgba(10, 22, 40, 0.30) 75%,
+      rgba(10, 22, 40, 0.10) 100%
+    );
+    z-index: 1;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    right: -10%;
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgba(64, 169, 255, 0.12) 0%, transparent 70%);
+    z-index: 1;
+  }
+}
+
+// ========== 主容器 ==========
+.container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100vh;
+  padding-right: 8%;
+  padding-left: 4%;
+
+  @media (max-width: 1024px) {
+    justify-content: center;
+    padding: 20px;
+  }
+}
+
+// ========== 左侧品牌区 ==========
+.brand {
+  flex: 1;
+  color: #fff;
+  max-width: 750px;
+  padding-right: 140px;
+  animation: fadeInUp 1s ease-out;
+
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.logoIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, $brand-light-blue, $brand-blue);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(22, 119, 255, 0.3);
+}
+
+.logoText {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  span {
+    color: $brand-light-blue;
+  }
+}
+
+.slogan {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+
+  .highlight {
+    background: linear-gradient(135deg, $brand-light-blue, #69e0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.desc {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.8;
+  max-width: 420px;
+}
+
+.trustBadges {
+  display: flex;
+  gap: 24px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.trustBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 14px;
+  border-radius: 20px 0 20px 0;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  .icon {
+    font-size: 16px;
+  }
+}
+
+// ========== 右侧登录卡片 ==========
+.card {
+  width: 500px;
+  background: $card-bg;
+  backdrop-filter: blur(24px);
+  border-radius: 24px;
+  padding: 44px 40px 36px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  animation: slideInRight 0.8s ease-out;
+  flex-shrink: 0;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 30px 24px 24px;
+    border-radius: 16px;
+  }
+}
+
+// ========== 卡片头部 ==========
+.cardHeader {
+  text-align: center;
+  margin-bottom: 32px;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 0.5px;
+
+    @media (max-width: 480px) {
+      font-size: 20px;
+    }
+  }
+}
+
+.sub {
+  font-size: 14px;
+  color: #888;
+  margin-top: 4px;
+  font-weight: 400;
+
+  strong {
+    color: $brand-blue;
+    font-weight: 600;
+  }
+}
+
+// ========== 站点信息 ==========
+.siteInfo {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f2f5;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.siteName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag {
+  background: $brand-blue;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+// ========== 底部版权 ==========
+.footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #c0c8d4;
+
+  a {
+    color: $brand-blue;
+    text-decoration: none;
+  }
+}
+
+// ========== 动画 ==========
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

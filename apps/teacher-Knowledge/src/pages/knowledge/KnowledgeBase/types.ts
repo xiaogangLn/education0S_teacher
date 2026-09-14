@@ -6,7 +6,7 @@ export interface Document {
     updatedAt: string;
     type: 'document' | 'sheet' | 'video' | 'audio' | 'pdf' | 'link';
     category: string;
-    permission: 'school' | 'grade' | 'class' | 'personal';
+    permission: 'school' | 'grade' | 'class' | 'personal' | 'research';
   }
   
   export interface Category {
@@ -30,6 +30,8 @@ export interface Document {
     myCreated: number;
     favorites: number;
     pending: number;
+    storageUsed: number;
+    storageLimit: number;
   }
   
   export interface Todo {
@@ -37,4 +39,5 @@ export interface Document {
     title: string;
     type: 'approve' | 'confirm' | 'import';
     priority: 'high' | 'medium' | 'low';
+    href?: string;
   }

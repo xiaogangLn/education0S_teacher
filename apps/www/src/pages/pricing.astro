@@ -1,0 +1,176 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { links, plans } from '@/lib/site';
+---
+
+<BaseLayout
+  title="定价"
+  description="EducationOS 商业版按月订阅：基础版 ¥0、Pro ¥30、Turbo ¥99。过期只降权不删数据。学校教育版线下合作、系统内零收费。"
+  path="/pricing"
+>
+  <section class="hero">
+    <div class="container center">
+      <h1 class="reveal">定价</h1>
+      <p class="muted reveal reveal-delay-1">按月订阅 · 过期只降权，不删数据</p>
+      <a class="btn btn-outline-aqua reveal reveal-delay-2" href={links.start}>开始使用 →</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="plans-title">
+    <div class="container">
+      <h2 id="plans-title" class="visually-hidden">商业版套餐</h2>
+      <div class="plans">
+        {
+          plans.map((plan, i) => (
+            <article class:list={['plan', 'reveal', `reveal-delay-${i + 1}`, { highlight: plan.highlight }]}>
+              <h3>{plan.name}</h3>
+              <p class="price">
+                <span>¥{plan.price}</span>
+                <small>/{plan.period}</small>
+              </p>
+              <p class="blurb muted">{plan.blurb}</p>
+              <ul>
+                <li>{plan.students}</li>
+                <li>{plan.generate}</li>
+                <li>{plan.grading}</li>
+                <li>{plan.portrait}</li>
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+      <p class="note muted reveal">
+        注册即开基础版。第一期 Pro / Turbo 注册后联系开通；支付渠道后续接入。过期只降权，备课数据保留。
+      </p>
+    </div>
+  </section>
+
+  <section class="section school-band">
+    <div class="container band">
+      <div>
+        <h2>学校不走这张表</h2>
+        <p class="muted">教育版线下合同、系统内零收费，由我们导入师生。</p>
+      </div>
+      <a class="btn btn-primary" href="/schools">扫码加微信</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 4.5rem 0 1rem;
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 0.6rem;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    letter-spacing: -0.04em;
+  }
+
+  .center .btn {
+    margin-top: 1.25rem;
+  }
+
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .plan {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.4rem;
+    background: rgba(10, 14, 20, 0.4);
+  }
+
+  .plan.highlight {
+    border-color: rgba(94, 234, 212, 0.45);
+    box-shadow: 0 0 40px rgba(94, 234, 212, 0.1);
+  }
+
+  .plan h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .price {
+    margin: 0.7rem 0;
+  }
+
+  .price span {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .plan.highlight .price span {
+    color: var(--aqua);
+  }
+
+  .price small {
+    color: var(--text-muted);
+  }
+
+  .blurb {
+    margin: 0 0 1rem;
+    min-height: 2.6em;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+
+  .note {
+    margin: 1.5rem 0 0;
+    font-size: 0.9rem;
+  }
+
+  .band {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    background: rgba(10, 14, 20, 0.45);
+  }
+
+  .band h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.25rem;
+  }
+
+  .band p {
+    margin: 0;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  @media (max-width: 900px) {
+    .plans {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

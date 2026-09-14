@@ -9,8 +9,8 @@ interface StepIndicatorProps {
 const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep }) => {
   const steps = [
     { num: 1, label: '填写信息' },
-    { num: 2, label: '身份验证' },
-    { num: 3, label: '注册成功' },
+    { num: 2, label: '邮箱确认' },
+    { num: 3, label: '等待验证' },
   ];
 
   return (

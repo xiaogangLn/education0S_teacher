@@ -1,107 +1,104 @@
 import { useState, useEffect, useCallback } from 'react';
+import { portraitService } from '@api/index';
+import { extractPayload } from '@/utils/knowledgeMapper';
+import { loadPersistedUser } from '@/utils/currentUser';
+import type { TeacherPortrait } from '@api/index';
 import type { TeacherProfile } from '../types/teacher';
 
-// 模拟数据
-const mockProfile: TeacherProfile = {
-  id: '1',
-  name: '张老师',
-  title: '数学教师 · 九年级 · 教龄 8 年',
-  avatar: '张',
-  tags: ['🏫 九年级1班 班主任', '📚 数学教研组组长', '✅ 认证教师', '📅 2026届'],
-  stats: [
-    { label: '教案质量', value: 4.5, color: 'blue' },
-    { label: '课堂互动', value: 4.2, color: 'green' },
-    { label: '创新评分', value: 88, color: 'purple' },
-    { label: '学生进步', value: 6, color: 'orange' },
-  ],
-  dimensions: [
-    {
-      label: '教学画像',
-      score: 4.3,
-      progress: 86,
-      items: [
-        { label: '教案质量', value: 4.5, badge: 'green' },
-        { label: '课堂互动', value: 4.2, badge: 'green' },
-        { label: '教学风格', value: '启发式', badge: 'blue' },
-        { label: '创新评分', value: 88, badge: 'purple' },
-      ],
-    },
-    {
-      label: '教研画像',
-      score: 4.0,
-      progress: 80,
-      items: [
-        { label: '教研参与', value: '4次/月', badge: 'green' },
-        { label: '课题研究', value: '1项', badge: 'blue' },
-        { label: '培训学时', value: '12h', badge: 'purple' },
-        { label: '论文发表', value: '2篇', badge: 'gray' },
-      ],
-    },
-    {
-      label: '效果画像',
-      score: 4.3,
-      progress: 86,
-      items: [
-        { label: '学生进步', value: '+6%', badge: 'green' },
-        { label: '满意度', value: '4.6/5', badge: 'green' },
-        { label: '同行评价', value: '4.3/5', badge: 'green' },
-        { label: '升学率', value: '92%', badge: 'blue' },
-      ],
-    },
-    {
-      label: '成长画像',
-      score: '稳步',
-      progress: 85,
-      items: [
-        { label: '能力演化', value: '稳步提升', badge: 'green' },
-        { label: '里程碑', value: '校级公开课', badge: 'blue' },
-        { label: '发展建议', value: '跨学科融合', badge: 'purple' },
-        { label: '成长指数', value: '85%', badge: 'gray' },
-      ],
-    },
-  ],
-  schedule: [
-    { day: '周一', periods: 2 },
-    { day: '周二', periods: 3, isToday: true },
-    { day: '周三', periods: 2 },
-    { day: '周四', periods: 1 },
-    { day: '周五', periods: 3 },
-    { day: '周六', periods: 0 },
-    { day: '周日', periods: 0 },
-  ],
-  todayClass: '九年级1班 · 数学 · 第1-2节 · 导数复习',
-  timeline: [
-    { date: '2026-09-01', title: '📝 教案审核通过', description: '《导数的几何意义》已发布到知识库' },
-    { date: '2026-08-30', title: '📊 教研组会议', description: '参与数学教研组月度研讨会' },
-    { date: '2026-08-28', title: '🏆 公开课', description: '校级公开课《二次函数》获优秀评价' },
-  ],
-  achievements: [
-    {
-      icon: '📈',
-      title: '学生成绩提升',
-      description: '所带班级数学平均分提升 <strong style="color:#10b981;">+12%</strong>',
-      meta: '2026届 · 九年级1班',
-    },
-    {
-      icon: '🏅',
-      title: '教学竞赛获奖',
-      description: '市级教学能手大赛 <strong style="color:#8b5cf6;">一等奖</strong>',
-      meta: '2026-05 · 西安市',
-    },
-    {
-      icon: '📚',
-      title: '教研成果',
-      description: '发表论文 <strong style="color:#4f46e5;">2篇</strong> · 课题 <strong style="color:#4f46e5;">1项</strong>',
-      meta: '省级课题《AI辅助数学教学研究》',
-    },
-  ],
-  radar: [
-    { label: '教学设计', value: 92, color: '#4f46e5' },
-    { label: '课堂管理', value: 85, color: '#10b981' },
-    { label: '师生互动', value: 78, color: '#8b5cf6' },
-    { label: '教研创新', value: 82, color: '#f59e0b' },
-  ],
-};
+function mapPortrait(data: TeacherPortrait, fallbackName?: string): TeacherProfile {
+  const name = data.teacher_name || fallbackName || '教师';
+  const teaching = data.teaching || ({} as TeacherPortrait['teaching']);
+  const research = data.research || ({} as TeacherPortrait['research']);
+  const effectiveness = data.effectiveness || ({} as TeacherPortrait['effectiveness']);
+  const growth = data.growth || ({} as TeacherPortrait['growth']);
+  const overall = Number(data.overall_score || 0);
+  return {
+    id: data.teacher_id,
+    name,
+    title: [data.department, data.school_name].filter(Boolean).join(' · ') || '教师',
+    avatar: name.charAt(0),
+    tags: [data.school_name, data.department].filter(Boolean).map((item) => `🏫 ${item}`),
+    stats: [
+      { label: '教案质量', value: teaching.lesson_plan_quality || 0, color: 'blue' },
+      { label: '课堂互动', value: teaching.classroom_interaction || 0, color: 'green' },
+      { label: '创新评分', value: teaching.innovation_score || 0, color: 'purple' },
+      { label: '学生进步', value: effectiveness.student_progress || 0, color: 'orange' },
+    ],
+    dimensions: [
+      {
+        label: '教学画像',
+        score: teaching.lesson_plan_quality || 0,
+        progress: Math.round((teaching.lesson_plan_quality || 0) * (teaching.lesson_plan_quality > 5 ? 1 : 20)),
+        items: [
+          { label: '教案质量', value: teaching.lesson_plan_quality || 0, badge: 'green' },
+          { label: '课堂互动', value: teaching.classroom_interaction || 0, badge: 'green' },
+          { label: '教学风格', value: teaching.teaching_style || '-', badge: 'blue' },
+          { label: '创新评分', value: teaching.innovation_score || 0, badge: 'purple' },
+        ],
+      },
+      {
+        label: '教研画像',
+        score: research.research_participation || 0,
+        progress: Math.min(100, Number(research.research_participation || 0)),
+        items: [
+          { label: '教研参与', value: `${research.research_participation || 0}`, badge: 'green' },
+          { label: '课题研究', value: `${research.projects_count || 0}项`, badge: 'blue' },
+          { label: '培训学时', value: `${research.training_hours || 0}h`, badge: 'purple' },
+          { label: '综合评分', value: overall, badge: 'gray' },
+        ],
+      },
+      {
+        label: '效果画像',
+        score: effectiveness.satisfaction || 0,
+        progress: Math.min(100, Number(effectiveness.satisfaction || 0) * (Number(effectiveness.satisfaction) > 5 ? 1 : 20)),
+        items: [
+          { label: '学生进步', value: `${effectiveness.student_progress || 0}`, badge: 'green' },
+          { label: '满意度', value: `${effectiveness.satisfaction || 0}`, badge: 'green' },
+          { label: '同行评价', value: `${effectiveness.peer_evaluation || 0}`, badge: 'green' },
+          { label: '成长趋势', value: `${data.growth_trend || 0}`, badge: 'blue' },
+        ],
+      },
+      {
+        label: '成长画像',
+        score: growth.capability_evolution || '稳步',
+        progress: 80,
+        items: [
+          { label: '能力演化', value: growth.capability_evolution || '-', badge: 'green' },
+          { label: '里程碑', value: growth.milestones?.[0]?.title || '-', badge: 'blue' },
+          { label: '发展建议', value: growth.development_suggestions?.[0] || '-', badge: 'purple' },
+          { label: '更新时间', value: String(data.updated_at || '').slice(0, 10), badge: 'gray' },
+        ],
+      },
+    ],
+    schedule: [
+      { day: '周一', periods: 2 },
+      { day: '周二', periods: 3, isToday: true },
+      { day: '周三', periods: 2 },
+      { day: '周四', periods: 1 },
+      { day: '周五', periods: 3 },
+      { day: '周六', periods: 0 },
+      { day: '周日', periods: 0 },
+    ],
+    todayClass: data.department ? `${data.department} · 教学安排` : '暂无课程安排',
+    timeline: (growth.milestones || []).slice(0, 5).map((item) => ({
+      date: String(item.date || '').slice(0, 10),
+      title: item.title,
+      description: item.title,
+    })),
+    achievements: (growth.development_suggestions || []).slice(0, 3).map((item, index) => ({
+      icon: ['📈', '🏅', '📚'][index] || '📌',
+      title: '发展建议',
+      description: item,
+      meta: data.school_name || '',
+    })),
+    radar: [
+      { label: '教学设计', value: Math.round(Number(teaching.lesson_plan_quality || 0) * (Number(teaching.lesson_plan_quality) > 10 ? 1 : 20)), color: '#4f46e5' },
+      { label: '课堂管理', value: Math.round(Number(teaching.classroom_interaction || 0) * (Number(teaching.classroom_interaction) > 10 ? 1 : 20)), color: '#10b981' },
+      { label: '师生互动', value: Math.round(Number(effectiveness.satisfaction || 0) * (Number(effectiveness.satisfaction) > 10 ? 1 : 20)), color: '#8b5cf6' },
+      { label: '教研创新', value: Math.round(Number(teaching.innovation_score || 0) * (Number(teaching.innovation_score) > 10 ? 1 : 20)), color: '#f59e0b' },
+    ],
+  };
+}
 
 export const useTeacherProfile = (teacherId?: string) => {
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
@@ -109,14 +106,25 @@ export const useTeacherProfile = (teacherId?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async (id?: string) => {
+    const user = loadPersistedUser();
+    const targetId = id || user?.id;
     setLoading(true);
     setError(null);
     try {
-      // 模拟 API 请求
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setProfile(mockProfile);
-    } catch (err) {
-      setError('获取教师画像失败');
+      if (!targetId) {
+        throw new Error('未登录');
+      }
+      const payload = extractPayload<{ data?: TeacherPortrait } & TeacherPortrait>(
+        await portraitService.getTeacher(targetId),
+      );
+      const data = (payload as any)?.data || payload;
+      if (!data?.teacher_id && !data?.teacher_name) {
+        throw new Error('画像数据为空');
+      }
+      setProfile(mapPortrait(data as TeacherPortrait, user?.realName));
+    } catch (err: any) {
+      setError(err?.message || '获取教师画像失败');
+      setProfile(null);
     } finally {
       setLoading(false);
     }

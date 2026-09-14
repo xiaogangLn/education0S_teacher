@@ -1,20 +1,23 @@
+import SmartGradingButton from "@/components/SmartGradingButton";
 import WorkbenchBaseTag from "@/components/toWorkbench";
-import { FundOutlined, HighlightOutlined, LogoutOutlined, ProfileOutlined } from "@ant-design/icons";
-import { Avatar, Dropdown, message, type MenuProps } from "antd"
+import { ClassInfo } from "@/components/classInfo";
+import { useHeaderUser } from "@/hooks/useHeaderUser";
+import { FundOutlined, HighlightOutlined, HistoryOutlined, LogoutOutlined, ProfileOutlined, RadarChartOutlined, TeamOutlined } from "@ant-design/icons";
+import { Avatar, Dropdown, type MenuProps } from "antd"
 import { useNavigate } from "react-router-dom";
 
 
 const HeaderComponent = () => {
     const navigate = useNavigate();
+    const { isLeader, displayName, canManageStudents, subtitle, avatarText, avatarUrl, handleLogout, canAccessReviewCenter } = useHeaderUser();
 
-    // 菜单项配置
     const menuItems: MenuProps['items'] = [
         {
             key: 'user-info',
             label: (
                 <div className="px-2 py-1">
-                    <div className="font-semibold text-gray-800">张老师</div>
-                    <div className="text-xs text-gray-500">XX中学 · 九年级数学</div>
+                    <div className="font-semibold text-gray-800">{displayName}</div>
+                    <div className="text-xs text-gray-500">{subtitle}</div>
                 </div>
             ),
             className: 'cursor-default hover:bg-transparent',
@@ -30,19 +33,40 @@ const HeaderComponent = () => {
             onClick: () => navigate('/workbench/teacherInfo'),
         },
         {
+            key: 'radarChart',
+            icon: <RadarChartOutlined />,
+            label: '教学画像',
+            onClick: () => navigate('/workbench/teacherPortrait'),
+        },
+        ...(canManageStudents ? [{
+            key: 'students',
+            icon: <TeamOutlined />,
+            label: '学生管理',
+            onClick: () =>  navigate('/workbench/studentList'),
+        }] : []),
+        {
+            key: 'history',
+            icon: <HistoryOutlined />,
+            label: '历史记录',
+            onClick: () => navigate('/workbench/historyOrder'),
+        },
+        ...(canAccessReviewCenter ? [{
             key: 'review',
             icon: <HighlightOutlined />,
             label: '审核中心',
             onClick: () => navigate('/reviewCenter'),
-        },
+        }] : []),
+        ...(isLeader ? [
+            { type: 'divider' as const },
+            {
+                key: 'leader',
+                icon: <FundOutlined />,
+                label: '领导窗口',
+                onClick: () => navigate('/leaderWindow'),
+            },
+        ] : []),
         {
             type: 'divider',
-        },
-        {
-            key: 'leader',
-            icon: <FundOutlined />,
-            label: '领导窗口',
-            onClick: () => navigate('/leaderWindow'),
         },
         {
             key: 'logout',
@@ -50,9 +74,7 @@ const HeaderComponent = () => {
             label: '退出登录',
             danger: true,
             onClick: () => {
-                message.success('已退出登录');
-                // 执行退出登录逻辑
-                navigate('/')
+                void handleLogout();
             },
         },
     ];
@@ -66,8 +88,16 @@ const HeaderComponent = () => {
                     <span className="text-[#4f46e5]">OS</span>
                     ·知识库
                 </div>
+                <div>
+                    <ClassInfo />
+                </div>
                 <div className="flex items-center">
-                    <WorkbenchBaseTag onClick={() => navigate('/workbench')} className="mr-[20px]" />
+                    <SmartGradingButton 
+                        onClick={() => navigate('/smartGrading')}
+                        text="智能批改"
+                        showBadge
+                    />
+                    <WorkbenchBaseTag onClick={() => navigate('/workbench')} className="mx-[20px]" />
                     <Dropdown
                         menu={{ items: menuItems }}
                         placement="topCenter"
@@ -76,14 +106,15 @@ const HeaderComponent = () => {
                     >
                         <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors">
                             <Avatar 
-                                size={36} 
+                                size={36}
+                                src={avatarUrl}
                                 className="bg-blue-500 flex items-center justify-center text-white font-medium"
                             >
-                                张
+                                {avatarText}
                             </Avatar>
                             <div className="hidden sm:block">
-                                <div className="text-sm font-medium text-gray-700 leading-tight">张老师</div>
-                                <div className="text-xs text-gray-400 leading-tight">XX中学 · 九年级</div>
+                                <div className="text-sm font-medium text-gray-700 leading-tight">{displayName}</div>
+                                <div className="text-xs text-gray-400 leading-tight">{subtitle}</div>
                             </div>
                         </div>
                     </Dropdown>

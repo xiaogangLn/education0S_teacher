@@ -1,0 +1,50 @@
+---
+import { siteConfig } from '@/lib/site';
+---
+
+<footer class="footer">
+  <div class="container row">
+    <p class="copy">© {new Date().getFullYear()} {siteConfig.name}</p>
+    <nav class="links" aria-label="页脚">
+      <a href="/product">产品</a>
+      <a href="/pricing">定价</a>
+      <a href="/schools">学校合作</a>
+      <a href="/guide">使用指南</a>
+      <a href="/legal/terms">用户协议</a>
+      <a href="/legal/privacy">隐私政策</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    padding: 1.75rem 0 2.5rem;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .copy {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem 1.1rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .links a:hover {
+    color: var(--aqua);
+  }
+</style>

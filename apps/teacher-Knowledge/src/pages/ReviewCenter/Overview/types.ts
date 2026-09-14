@@ -39,11 +39,13 @@ export interface ReviewItem {
   }
   
   export interface ReviewDetail extends ReviewItem {
+    markdown?: string;
     content: {
       objectives: string[];
       keyPoints: string[];
       schedule: string[];
       notes?: string;
+      markdown?: string;
     };
     comments: Comment[];
     timeline: TimelineItem[];

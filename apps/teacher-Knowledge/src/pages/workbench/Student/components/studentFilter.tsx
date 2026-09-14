@@ -11,12 +11,15 @@ interface StudentFilterProps {
   filters: FilterOptions;
   onFilterChange: (filters: Partial<FilterOptions>) => void;
   onReset: () => void;
+  /** 商业版无换班，隐藏换班筛选 */
+  showTransferFilter?: boolean;
 }
 
 const StudentFilter: React.FC<StudentFilterProps> = ({
   filters,
   onFilterChange,
   onReset,
+  showTransferFilter = true,
 }) => {
   return (
     <div className="flex-shrink-0 flex gap-3 items-center mb-4 px-4">
@@ -42,17 +45,19 @@ const StudentFilter: React.FC<StudentFilterProps> = ({
         <Option value="remedial">需补习</Option>
       </Select>
 
-      <Select
-        className="w-36"
-        value={filters.hasTransfer || 'all'}
-        onChange={(value) =>
-          onFilterChange({ hasTransfer: value as 'all' | 'has' | 'none' })
-        }
-      >
-        <Option value="all">全部换班</Option>
-        <Option value="has">有换班记录</Option>
-        <Option value="none">无换班记录</Option>
-      </Select>
+      {showTransferFilter ? (
+        <Select
+          className="w-36"
+          value={filters.hasTransfer || 'all'}
+          onChange={(value) =>
+            onFilterChange({ hasTransfer: value as 'all' | 'has' | 'none' })
+          }
+        >
+          <Option value="all">全部换班</Option>
+          <Option value="has">有换班记录</Option>
+          <Option value="none">无换班记录</Option>
+        </Select>
+      ) : null}
 
       <Button type="primary" icon={<SearchOutlined />} onClick={() => onFilterChange({})}>
         筛选

@@ -51,7 +51,7 @@ export const KnowledgeBaseTag: React.FC<KnowledgeBaseTagProps> = ({
       <span className="text-sm font-medium text-gray-700">前往知识库</span>
 
       {/* 统计数字 */}
-      {showStats && (
+      {/* {showStats && (
         <span
           className={`
             text-xs font-medium px-2.5 py-0.5 rounded-full
@@ -62,7 +62,7 @@ export const KnowledgeBaseTag: React.FC<KnowledgeBaseTagProps> = ({
         >
           {documentCount}
         </span>
-      )}
+      )} */}
 
       {/* 箭头 */}
       <span

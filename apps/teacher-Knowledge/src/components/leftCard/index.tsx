@@ -12,7 +12,9 @@ import { useDeepCompareEffect } from 'react-use';
 export const LeftPanel: React.FC<LeftPanelProps> = ({
   onFileSelect,
   onFileClick,
-  onSelectedFiles,  // 新增
+  onSelectedFiles,
+  initialPlannedFiles,
+  historyMode = false,
   className = '',
 }) => {
   const {
@@ -21,30 +23,34 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     selectedFileIds,
     tempSelectedIds,
     searchDrawerOpen,
-    currentFiles,
+    plannedFiles,
+    drawerFiles,
     allChecked,
     indeterminate,
+    uploading,
+    scopeLabel,
     handleSearch,
+    handleSearchChange,
+    cancelPendingSearch,
     openSearchDrawer,
     closeSearchDrawer,
     handleCategoryClick,
     handleTempSelectAll,
     handleTempFileCheck,
     handleConfirm,
+    handlePlannedFileCheck,
     handleMainSelectAll,
+    handleUpload,
     getCategoryCount,
     getSelectedFiles,
-  } = useFileSelection();
+  } = useFileSelection(initialPlannedFiles);
 
-  // 当选中的文件变化时，回调给父组件
   useDeepCompareEffect(() => {
     if (onSelectedFiles) {
-      const selectedFiles = getSelectedFiles();
-      onSelectedFiles(selectedFiles);
+      onSelectedFiles(getSelectedFiles());
     }
   }, [selectedFileIds, getSelectedFiles, onSelectedFiles]);
 
-  // 确认选择的包装函数
   const onConfirm = () => {
     handleConfirm(onFileSelect);
   };
@@ -55,24 +61,24 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 
   return (
     <div className={`h-full flex flex-col bg-white border-r border-gray-100 ${className}`}>
-      {/* 标题 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <span className="font-semibold text-base">📁 素材库</span>
       </div>
 
-      {/* 搜索框 */}
       <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
-        <SearchBar onClick={openSearchDrawer} selectedCount={selectedFileIds.size} />
+        <SearchBar onClick={openSearchDrawer} selectedCount={plannedFiles.length} scopeLabel={scopeLabel} />
       </div>
 
-      {/* 主文件列表 */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 flex-shrink-0">
           <span className="text-sm font-medium text-gray-600">
             计划使用
-            <span className="text-xs text-gray-400 ml-2">({currentFiles.length} 项)</span>
+            <span className="text-xs text-gray-400 ml-2">({plannedFiles.length} 项)</span>
+            {historyMode && plannedFiles.length > 0 && (
+              <span className="text-xs text-blue-500 ml-2">本记录已选</span>
+            )}
           </span>
-          {currentFiles.length > 0 && (
+          {plannedFiles.length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-400">
                 已选 <span className="text-blue-500 font-medium">{selectedFileIds.size}</span> 项
@@ -83,7 +89,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
                 className="text-xs text-blue-500"
                 onClick={onMainSelectAll}
               >
-                {currentFiles.every(f => selectedFileIds.has(f.id)) ? '取消全选' : '全选'}
+                {plannedFiles.every((file) => selectedFileIds.has(file.id)) ? '取消全选' : '全选'}
               </Button>
             </div>
           )}
@@ -91,43 +97,39 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 
         <div className="flex-1 overflow-auto p-2">
           <FileList
-            files={currentFiles}
+            files={plannedFiles}
             selectedIds={selectedFileIds}
-            onCheck={(id, checked) => {
-              // 实际项目中需要暴露 setSelectedFileIds
-              // 这里通过重新调用 handleMainSelectAll 来更新
-              // 更好的方式是在 useFileSelection 中暴露 setSelectedFileIds
-            }}
+            onCheck={handlePlannedFileCheck}
             onFileClick={onFileClick || (() => {})}
-            searchKeyword={searchKeyword}
+            emptyDescription={historyMode ? '该记录未选择素材' : '请搜索选择素材，或从下方上传'}
           />
         </div>
       </div>
 
-      {/* 底部上传 */}
-      <UploadArea />
+      <UploadArea uploading={uploading} onUpload={handleUpload} />
 
-      {/* 搜索抽屉 */}
       <SearchDrawer
         open={searchDrawerOpen}
         onClose={closeSearchDrawer}
         onConfirm={onConfirm}
         searchKeyword={searchKeyword}
-        onSearchChange={handleSearch}
+        onSearchChange={handleSearchChange}
         onSearchPressEnter={handleSearch}
+        onCancelPendingSearch={cancelPendingSearch}
         onClearSearch={() => {
           handleSearch('');
         }}
         selectedCategory={selectedCategory}
         onCategoryClick={handleCategoryClick}
         getCategoryCount={getCategoryCount}
-        currentFiles={currentFiles}
+        currentFiles={drawerFiles}
         tempSelectedIds={tempSelectedIds}
         onTempFileCheck={handleTempFileCheck}
         onFileClick={onFileClick || (() => {})}
         allChecked={allChecked}
         indeterminate={indeterminate}
         onTempSelectAll={handleTempSelectAll}
+        scopeLabel={scopeLabel}
       />
     </div>
   );

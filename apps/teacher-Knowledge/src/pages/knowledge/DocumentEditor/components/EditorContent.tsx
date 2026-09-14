@@ -9,6 +9,7 @@ interface EditorContentProps {
 }
 
 export const EditorContent: React.FC<EditorContentProps> = ({ editor, loading = false }) => {
+  console.log(editor, 'sdfdsfds');
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">

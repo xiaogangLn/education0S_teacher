@@ -3,12 +3,12 @@ import { useState, useCallback, useMemo } from 'react';
 import type {
   ExportScope,
   ExportFormat,
-  ExportFormatOption,
   TimeRange,
-  ExportOption,
   ExportTask,
 } from '../types';
 import { defaultScopes, formatOptions, timeRangeOptions, exportOptions } from '../constants';
+import { exportService } from '@api/index';
+import { extractPayload } from '@/utils/knowledgeMapper';
 
 export const useExportCenter = () => {
   const [scopes, setScopes] = useState<ExportScope[]>(defaultScopes);
@@ -68,37 +68,65 @@ export const useExportCenter = () => {
     }
 
     setExporting(true);
-    setExportProgress(0);
+    setExportProgress(10);
 
     try {
-      // 模拟导出过程
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-        setExportProgress(i);
+      const payload = await exportService.create({
+        scope: {
+          academic: selectedScopes.includes('academic'),
+          teacher: selectedScopes.includes('teacher'),
+          student: selectedScopes.includes('student'),
+          plan: selectedScopes.includes('plan'),
+        },
+        format: selectedFormat,
+        time_range: selectedTimeRange,
+      });
+      const created = extractPayload<{ task_id?: string; file_name?: string; status?: string }>(payload);
+      const taskId = created.task_id;
+      if (!taskId) throw new Error('未返回导出任务');
+
+      let progress = 20;
+      let status = created.status || 'processing';
+      let downloadUrl: string | undefined;
+      let fileName = created.file_name || 'export';
+      for (let i = 0; i < 8 && status !== 'completed' && status !== 'failed'; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        const taskPayload = extractPayload<any>(await exportService.getTask(taskId));
+        progress = Number(taskPayload.progress || progress + 10);
+        status = taskPayload.status || status;
+        downloadUrl = taskPayload.download_url;
+        fileName = taskPayload.file_name || fileName;
+        setExportProgress(Math.min(progress, 95));
+      }
+
+      if (status === 'failed') {
+        throw new Error('导出任务失败');
       }
 
       const task: ExportTask = {
-        id: `task-${Date.now()}`,
+        id: taskId,
         name: optionId
-          ? exportOptions.find(o => o.id === optionId)?.title || '导出任务'
-          : '批量导出',
+          ? exportOptions.find(o => o.id === optionId)?.title || fileName
+          : fileName,
         status: 'completed',
         progress: 100,
         format: selectedFormat,
         createdAt: new Date().toLocaleString('zh-CN'),
-        downloadUrl: '#',
+        downloadUrl: downloadUrl || `/api/v1/export/download/${taskId}`,
       };
-
+      setExportProgress(100);
       setExportTasks(prev => [task, ...prev]);
-
+      if (task.downloadUrl && task.downloadUrl !== '#') {
+        window.open(task.downloadUrl, '_blank');
+      }
       return { success: true, task };
-    } catch (error) {
-      return { success: false, error: '导出失败，请重试' };
+    } catch (error: any) {
+      return { success: false, error: error?.message || '导出失败，请重试' };
     } finally {
       setExporting(false);
       setExportProgress(0);
     }
-  }, [selectedScopes, selectedFormat]);
+  }, [selectedScopes, selectedFormat, selectedTimeRange]);
 
   // 批量导出
   const batchExport = useCallback(async () => {

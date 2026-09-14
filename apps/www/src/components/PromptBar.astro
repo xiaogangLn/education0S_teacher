@@ -1,0 +1,87 @@
+---
+interface Props {
+  placeholder?: string;
+  hint?: string;
+}
+
+const {
+  placeholder = '输入课题，开始五阶段生成...',
+  hint = '例如：按我一贯的分层+易错点习惯，写一节初中生物光合作用教案',
+} = Astro.props;
+---
+
+<div class="prompt reveal reveal-delay-2" role="presentation">
+  <div class="bar">
+    <span class="spark" aria-hidden="true">✦</span>
+    <span class="placeholder">{placeholder}</span>
+    <span class="send" aria-hidden="true">→</span>
+  </div>
+  {hint ? <p class="hint">{hint}</p> : null}
+</div>
+
+<style>
+  .prompt {
+    width: min(100%, 28rem);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 0.85rem 0.85rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(94, 234, 212, 0.28);
+    background: rgba(10, 14, 20, 0.65);
+    box-shadow: 0 0 40px rgba(94, 234, 212, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+  }
+
+  .spark {
+    color: var(--aqua);
+    font-size: 0.95rem;
+  }
+
+  .placeholder {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .send {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--aqua);
+    color: #06201b;
+    font-weight: 700;
+    flex-shrink: 0;
+    animation: pulse 2.8s ease-in-out infinite;
+  }
+
+  .hint {
+    margin: 0.7rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.35);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(94, 234, 212, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .send {
+      animation: none;
+    }
+  }
+</style>

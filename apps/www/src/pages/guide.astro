@@ -1,0 +1,117 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { guideSteps, links } from '@/lib/site';
+---
+
+<BaseLayout
+  title="使用指南"
+  description="四步开始使用 EducationOS：邮箱确认注册、五阶段生成、知识库沉淀、组卷批改与学情。学校请扫码开通教育版。"
+  path="/guide"
+>
+  <section class="hero">
+    <div class="container center">
+      <h1 class="reveal">开始使用</h1>
+      <p class="muted reveal reveal-delay-1">注册确认 · 五阶段生成 · 批改与学情</p>
+      <a class="btn btn-primary reveal reveal-delay-2" href={links.start}>开始使用 →</a>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-title">
+    <div class="container">
+      <h2 id="steps-title" class="visually-hidden">上手步骤</h2>
+      <ol class="steps">
+        {
+          guideSteps.map((step, i) => (
+            <li class={`reveal reveal-delay-${i + 1}`}>
+              <span class="n">{step.n}</span>
+              <div>
+                <h3>{step.title}</h3>
+                <p class="muted">{step.desc}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section tip">
+    <div class="container tip-row">
+      <p class="muted">学校请前往学校合作页扫码，不要走公开注册。</p>
+      <a class="btn btn-ghost" href="/schools">学校合作</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 4.5rem 0 1rem;
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 0.55rem;
+    font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+    letter-spacing: -0.03em;
+  }
+
+  .center .btn {
+    margin-top: 1.25rem;
+  }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .n {
+    color: var(--aqua);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  h3 {
+    margin: 0 0 0.3rem;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .tip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    padding-top: 1.25rem;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>

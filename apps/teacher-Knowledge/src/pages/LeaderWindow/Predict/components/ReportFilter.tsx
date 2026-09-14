@@ -31,7 +31,7 @@ export const ReportFilter: React.FC<ReportFilterProps> = ({
         onChange={(value) => onFilterChange('grade', value)}
         options={gradeOptions.map(opt => ({ label: opt, value: opt }))}
         className="min-w-[140px]"
-        placeholder="选择年级"
+        placeholder="选择班级"
         disabled={loading}
       />
       <Select

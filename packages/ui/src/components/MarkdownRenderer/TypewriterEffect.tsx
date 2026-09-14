@@ -1,9 +1,9 @@
 // packages/ui/src/components/MarkdownRenderer/TypewriterEffect.tsx
 import React, { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { useTypewriter } from './hooks/useTypewriter';
 import { defaultCustomComponents } from './CustomComponents';
+import { markdownRemarkPlugins, markdownRehypePlugins } from './markdownPlugins';
 
 interface TypewriterEffectProps {
   content: string;
@@ -53,7 +53,8 @@ export const TypewriterEffect: React.FC<TypewriterEffectProps> = ({
   return (
     <div className={`typewriter-container ${className}`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={markdownRemarkPlugins}
+        rehypePlugins={markdownRehypePlugins}
         components={components as any}
       >
         {displayText}

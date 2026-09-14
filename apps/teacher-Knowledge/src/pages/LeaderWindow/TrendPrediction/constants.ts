@@ -1,7 +1,6 @@
 // constants.ts
 import type { PredictionStep } from './types';
 
-export const GRADE_OPTIONS = ['七年级', '八年级', '九年级'] as const;
 export const SUBJECT_OPTIONS = ['数学', '语文', '英语', '物理', '化学'] as const;
 export const WEEK_OPTIONS = [
   { value: 4, label: '4 周' },

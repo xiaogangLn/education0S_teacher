@@ -10,9 +10,10 @@ interface StudentHeaderProps {
   onExport?: () => void;
   onAddStudent?: () => void;
   handleCancel: () => void;
+  canAddStudent?: boolean;
 }
 
-const StudentHeader: React.FC<StudentHeaderProps> = ({ onExport, onAddStudent, handleCancel }) => {
+const StudentHeader: React.FC<StudentHeaderProps> = ({ onExport, onAddStudent, handleCancel, canAddStudent = false }) => {
   return (
     <div className="flex-shrink-0 flex flex-wrap justify-between items-center gap-4 mb-4">
       <div className="flex items-center gap-3">
@@ -30,9 +31,11 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ onExport, onAddStudent, h
         <Button icon={<ExportOutlined />} onClick={onExport}>
           导出名单
         </Button>
-        <Button type="primary" icon={<PlusOutlined />} onClick={onAddStudent}>
-          添加学生
-        </Button>
+        {canAddStudent ? (
+          <Button type="primary" icon={<PlusOutlined />} onClick={onAddStudent}>
+            添加学生
+          </Button>
+        ) : null}
       </Space>
     </div>
   );

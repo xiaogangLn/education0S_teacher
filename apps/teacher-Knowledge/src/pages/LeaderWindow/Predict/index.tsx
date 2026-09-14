@@ -1,15 +1,34 @@
 // index.tsx - 主页面
 import React from 'react';
-import { Spin, Alert, Space, Button } from 'antd';
+import { Spin, Space, Button } from 'antd';
 import { useReportData } from './hooks/useReportData';
 import { useReportPagination } from './hooks/useReportPagination';
 import { ReportStats } from './components/ReportStats';
 import { ReportFilter } from './components/ReportFilter';
 import { ReportTable } from './components/ReportTable';
 import { ReportPagination } from './components/ReportPagination';
-import { gradeOptions, subjectOptions, dimensionOptions, PAGE_SIZE } from './constants';
+import { dimensionOptions, PAGE_SIZE } from './constants';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useOrgContext } from '@/hooks/useOrgContext';
+
+function downloadCsv(filename: string, rows: Array<Record<string, unknown>>) {
+  const headers = ['班级', '年级', '学科', '掌握度', '优秀率', '待提升率', '趋势'];
+  const lines = [
+    headers.join(','),
+    ...rows.map((item) =>
+      [item.className, item.grade, item.subject, item.masteryRate, item.excellentRate, item.improvementRate, item.trend]
+        .map((value) => `"${String(value ?? '')}"`)
+        .join(','),
+    ),
+  ];
+  const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 
 interface DetailedReportPageProps {
   onRowClick?: (record: any) => void;
@@ -26,7 +45,13 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
     updateFilter,
     resetFilter,
     reload,
+    classOptions,
+    subjectOptions,
   } = useReportData();
+  const org = useOrgContext();
+  const cohortLabel = org.enrollmentYear
+    ? (String(org.enrollmentYear).match(/^(\d{4})-(\d{4})$/) ? `${org.enrollmentYear.match(/^(\d{4})/)?.[1]}届` : `${org.enrollmentYear}届`)
+    : '未选择届别';
 
   const {
     currentPage,
@@ -43,8 +68,7 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
   const navigate = useNavigate();
 
   const handleExport = () => {
-    console.log('导出数据:', filteredData);
-    // 实际导出逻辑
+    downloadCsv(`学情报表-${cohortLabel}.csv`, filteredData as any);
   };
 
   if (loading) {
@@ -62,7 +86,7 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
         <div>
           <h1 className="text-2xl font-bold text-gray-800">📊 查看详细报表</h1>
           <p className="text-sm text-gray-500">
-            全年级各班级详细数据 · 学科对比 · 趋势明细
+            全年级各班级详细数据 · 学科对比 · 趋势明细 · {cohortLabel}
             
           </p>
         </div>
@@ -89,7 +113,7 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
         {/* 标题栏 */}
         <div className="flex-shrink-0 p-4 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
           <div>
-            <span className="font-semibold text-base">📋 年级详细报表 · 2025-2026</span>
+            <span className="font-semibold text-base">📋 年级详细报表 · {cohortLabel}</span>
             <span className="text-sm text-gray-400 ml-3">
               共 {totalCount} 条记录
             </span>
@@ -109,7 +133,7 @@ export const DetailedReportPage: React.FC<DetailedReportPageProps> = ({
             onFilterChange={updateFilter}
             onReset={resetFilter}
             onExport={handleExport}
-            gradeOptions={gradeOptions}
+            gradeOptions={classOptions}
             subjectOptions={subjectOptions}
             dimensionOptions={dimensionOptions}
             loading={loading}

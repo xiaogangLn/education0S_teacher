@@ -12,6 +12,7 @@ export interface PredictionStep {
     grade: string;
     subject: string;
     weeks: number;
+    enrollment_year?: string;
   }
   
   export interface SSEEvent {

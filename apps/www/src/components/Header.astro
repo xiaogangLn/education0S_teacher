@@ -1,0 +1,112 @@
+---
+import { links, nav, siteConfig } from '@/lib/site';
+
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<header class="header">
+  <div class="container bar">
+    <a class="brand" href="/" aria-label={`${siteConfig.name} 首页`}>
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">{siteConfig.name}</span>
+    </a>
+    <nav class="nav" aria-label="主导航">
+      {
+        nav.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <a class:list={['nav-link', { active }]} href={item.href} aria-current={active ? 'page' : undefined}>
+              {item.label}
+            </a>
+          );
+        })
+      }
+    </nav>
+    <div class="actions">
+      <a class="login" href={links.login}>登录</a>
+      <a class="btn btn-outline-aqua start" href={links.start}>开始</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    backdrop-filter: blur(16px);
+    background: rgba(20, 24, 31, 0.72);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .brand-mark {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: var(--aqua);
+    box-shadow: 0 0 16px var(--aqua-glow);
+  }
+
+  .nav {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .nav-link {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--text);
+  }
+
+  .nav-link.active {
+    border-bottom-color: var(--aqua);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .login {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .login:hover {
+    color: var(--text);
+  }
+
+  .start {
+    min-height: 2.35rem;
+    padding-inline: 1rem;
+  }
+
+  @media (max-width: 820px) {
+    .nav {
+      display: none;
+    }
+  }
+</style>

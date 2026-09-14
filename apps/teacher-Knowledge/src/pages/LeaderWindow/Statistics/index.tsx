@@ -2,7 +2,6 @@
 import React from 'react';
 import { Drawer, Spin } from 'antd';
 import { useDashboardData } from './hooks/useDashboardData';
-import { useGradeTrend } from './hooks/useGradeTrend';
 import { useExport } from './hooks/useExport';
 import { useExportCenter } from './components/ExportCenter/hooks/useExportCenter';
 import { GradeTrendCards } from './components/GradeTrendCards';
@@ -21,9 +20,8 @@ export const LeaderDashboardPage: React.FC = () => {
     isExportDrawer,
     setIsExportDrawer,
     reload,
+    highlights,
   } = useDashboardData();
-
-  const { totalAverage } = useGradeTrend(gradeTrends);
 
   const {
     selectedCount,
@@ -76,18 +74,18 @@ export const LeaderDashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             <div className="bg-white rounded-xl p-6 border border-gray-100 text-center">
               <div className="text-sm text-gray-500">📊 年级平均掌握度</div>
-              <div className="text-4xl font-bold text-blue-500 mt-2">{totalAverage}%</div>
-              <div className="text-sm text-green-500 mt-1">↑ 3.2% 较上月</div>
+              <div className="text-4xl font-bold text-blue-500 mt-2">{highlights.average}%</div>
+              <div className="text-sm text-green-500 mt-1">本届班级平均掌握度</div>
             </div>
             <div className="bg-white rounded-xl p-6 border border-gray-100 text-center">
-              <div className="text-sm text-gray-500">📈 最高增长率</div>
-              <div className="text-4xl font-bold text-green-500 mt-2">+4.0%</div>
-              <div className="text-sm text-gray-400 mt-1">九年级3班</div>
+              <div className="text-sm text-gray-500">📈 最高掌握度</div>
+              <div className="text-4xl font-bold text-green-500 mt-2">{highlights.best ? `${highlights.best.masteryRate}%` : '--'}</div>
+              <div className="text-sm text-gray-400 mt-1">{highlights.best?.className || '暂无班级'}</div>
             </div>
             <div className="bg-white rounded-xl p-6 border border-gray-100 text-center">
               <div className="text-sm text-gray-500">⚠️ 需重点关注</div>
-              <div className="text-4xl font-bold text-red-500 mt-2">-2.5%</div>
-              <div className="text-sm text-gray-400 mt-1">九年级4班</div>
+              <div className="text-4xl font-bold text-red-500 mt-2">{highlights.worst ? `${highlights.worst.masteryRate}%` : '--'}</div>
+              <div className="text-sm text-gray-400 mt-1">{highlights.worst?.className || '暂无班级'}</div>
             </div>
           </div>
         </div>

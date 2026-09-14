@@ -5,8 +5,12 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "pnpm --filter teacher-knowledge dev",
+    "dev:www": "pnpm --filter www dev",
+    "collab": "pnpm --filter teacher-knowledge collab",
     "build": "pnpm --filter teacher-knowledge build",
+    "build:www": "pnpm --filter www build",
     "preview": "pnpm --filter teacher-knowledge preview",
+    "preview:www": "pnpm --filter www preview",
     "lint": "pnpm --filter teacher-knowledge lint",
     "type-check": "pnpm --filter teacher-knowledge exec tsc --noEmit"
   }

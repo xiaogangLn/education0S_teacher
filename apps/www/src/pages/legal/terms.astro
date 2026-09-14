@@ -1,0 +1,58 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="用户协议"
+  description="EducationOS 用户协议：使用本产品即表示同意相关服务条款。"
+  path="/legal/terms"
+>
+  <article class="legal container">
+    <h1>用户协议</h1>
+    <p class="muted">更新日期：2026-03-11</p>
+    <p>
+      欢迎使用 EducationOS。使用本服务前，请仔细阅读本协议。继续使用即表示您同意遵守下列约定。
+    </p>
+    <h2>1. 服务说明</h2>
+    <p>
+      EducationOS 提供面向教师的 AI 教学工作台，包括但不限于教案、课件、试卷生成、作业批改与学情分析等功能。具体能力以实际开通的产品版本与套餐为准。
+    </p>
+    <h2>2. 账号与版本</h2>
+    <p>
+      商业版由用户自助注册开通个人空间；教育版由平台或合作方导入学校师生，不通过公开注册开通。您应妥善保管账号信息，并对账号下的行为负责。
+    </p>
+    <h2>3. 使用规范</h2>
+    <p>
+      您不得利用本服务从事违法违规活动，不得上传侵犯他人权益的内容，不得试图破坏、干扰系统正常运行。
+    </p>
+    <h2>4. 内容与知识产权</h2>
+    <p>
+      您上传或生成的内容，其权利归属按相关法律法规及双方约定处理。本平台的品牌、界面与软件本身归权利人所有。
+    </p>
+    <h2>5. 免责声明</h2>
+    <p>
+      AI 生成内容可能存在偏差，请您在教学实践中自行审核。因不可抗力或非本平台可控原因导致的服务中断，平台将尽力恢复但不承担相应间接损失。
+    </p>
+    <h2>6. 联系我们</h2>
+    <p>如有疑问，请通过学校合作页扫码联系商务，或通过产品内反馈渠道联系我们。</p>
+  </article>
+</BaseLayout>
+
+<style>
+  .legal {
+    padding: 3.5rem 0 4rem;
+    max-width: 720px;
+  }
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+  }
+  h2 {
+    margin: 1.75rem 0 0.6rem;
+    font-size: 1.15rem;
+  }
+  p {
+    margin: 0.55rem 0;
+    color: var(--text-muted);
+  }
+</style>

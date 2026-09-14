@@ -1,4 +1,3 @@
-// hooks/useDocumentEditor.ts
 import { useState, useCallback } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -9,65 +8,59 @@ import TaskItem from '@tiptap/extension-task-item';
 import type { DocumentMetadata, DocumentContent, OutlineItem } from '../types';
 import { AIAnnotationExtension } from '../extensions/AIAnnotation';
 import { MathBlockExtension } from '../extensions/MathBlock';
-import { Extension } from '@tiptap/core';
+import { Markdown } from '@tiptap/markdown';
 
 export const useDocumentEditor = (
   initialContent: string,
   metadata: DocumentMetadata,
-  collaborationExtensions?: Extension[] // 新增第三个参数
 ) => {
   const [isFocused, setIsFocused] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [outline, setOutline] = useState<OutlineItem[]>([]);
 
-  // 基础扩展
-  const baseExtensions = [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3],
-      },
-    }),
-    Placeholder.configure({
-      placeholder: "输入 '/' 快速插入块，或开始编写...",
-    }),
-    Link.configure({
-      openOnClick: false,
-      HTMLAttributes: {
-        class: 'text-blue-500 underline',
-      },
-    }),
-    TaskList,
-    TaskItem,
-    AIAnnotationExtension,
-    MathBlockExtension,
-  ];
-
-  // 合并协作扩展
-  const extensions = collaborationExtensions
-    ? [...baseExtensions, ...collaborationExtensions]
-    : baseExtensions;
-
   const editor = useEditor({
-    extensions,
-    content: initialContent,
+    immediatelyRender: false,
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+      Markdown,
+      Placeholder.configure({
+        placeholder: "输入 '/' 快速插入块，或开始编写...",
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-500 underline',
+        },
+      }),
+      TaskList,
+      TaskItem,
+      AIAnnotationExtension,
+      MathBlockExtension,
+    ],
+    content: initialContent || '<p></p>',
+    contentType: initialContent ? 'markdown' : undefined,
     editorProps: {
       attributes: {
         class: 'outline-none text-gray-800 leading-relaxed min-h-[500px]',
       },
     },
-    onUpdate: ({ editor }) => {
-      const text = editor.getText();
+    onUpdate: ({ editor: instance }) => {
+      const text = instance.getText();
       const words = text.trim() ? text.split(/\s+/).length : 0;
       setWordCount(words);
-      updateOutline(editor);
+      updateOutline(instance);
     },
     onFocus: () => setIsFocused(true),
     onBlur: () => setIsFocused(false),
   });
 
-  const updateOutline = useCallback((editor: Editor) => {
+  const updateOutline = useCallback((instance: Editor) => {
     const items: OutlineItem[] = [];
-    const json = editor.getJSON();
+    const json = instance.getJSON();
     if (json.content) {
       traverseNodes(json.content, items);
     }
@@ -95,13 +88,10 @@ export const useDocumentEditor = (
     if (!editor) {
       return { json: null, html: '', text: '', wordCount: 0, knowledgePointCount: 0 };
     }
-    const json = editor.getJSON();
-    const html = editor.getHTML();
-    const text = editor.getText();
     return {
-      json,
-      html,
-      text,
+      json: editor.getJSON(),
+      html: editor.getHTML(),
+      text: editor.getText(),
       wordCount,
       knowledgePointCount: metadata.knowledgePoints.length,
     };
@@ -112,15 +102,13 @@ export const useDocumentEditor = (
     editor.chain().focus().insertContent({
       type: 'paragraph',
       attrs: { 'data-ai-annotation': 'true' },
-      content: [
-        { type: 'text', text: `🤖 AI生成：${text}` },
-      ],
+      content: [{ type: 'text', text: `🤖 AI生成：${text}` }],
     }).run();
   }, [editor]);
 
   const insertMathBlock = useCallback((latex: string) => {
     if (!editor) return;
-    (editor?.commands as any).insertMathBlock(latex);
+    (editor.commands as any).insertMathBlock(latex);
   }, [editor]);
 
   return {

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   // 代理目标
-  const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:8000';
+  const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:9530';
   
   // 是否启用调试
   const isDebug = env.VITE_DEBUG === 'true';
@@ -53,14 +53,20 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
-          // 配置日志
+          timeout: 180000,
+          proxyTimeout: 180000,
           configure: (proxy, options) => {
             proxy.on('error', (err, req, res) => {
               console.log('[Proxy Error]', err.message);
             });
             proxy.on('proxyReq', (proxyReq, req, res) => {
               console.log('[Proxy]', req.method, req.url, '→', options.target);
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              if (String(req.url || '').includes('/stream')) {
+                proxyRes.headers['cache-control'] = 'no-cache';
+                proxyRes.headers['x-accel-buffering'] = 'no';
+              }
             });
           },
         },

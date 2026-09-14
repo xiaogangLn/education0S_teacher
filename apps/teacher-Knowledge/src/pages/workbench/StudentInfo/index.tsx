@@ -13,14 +13,16 @@ import { ExamRecords } from './components/examRecords';
 import { ActionButtons } from './components/actionButtons';
 import { StudyPlan } from './components/studyPlan';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 
 interface StudentPortraitPageProps {
   studentId?: string;
 }
 
-const StudentPortraitPage: React.FC<StudentPortraitPageProps> = ({ studentId }) => {
+const StudentPortraitPage: React.FC<StudentPortraitPageProps> = ({ studentId: studentIdProp }) => {
+  const [searchParams] = useSearchParams();
+  const studentId = studentIdProp || searchParams.get('id') || undefined;
   const {
     loading,
     portrait,
@@ -112,7 +114,7 @@ const StudentPortraitPage: React.FC<StudentPortraitPageProps> = ({ studentId }) 
             onClose={() => setDrawerOpen(false)}
             open={DrawerOpen}
         >
-            <StudyPlan studentId="1" />
+            <StudyPlan studentId={studentId} />
       </Drawer>
     </div>
   );

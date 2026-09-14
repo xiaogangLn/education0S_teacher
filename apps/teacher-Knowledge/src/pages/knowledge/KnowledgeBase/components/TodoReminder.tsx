@@ -1,4 +1,3 @@
-// components/TodoReminder.tsx
 import React from 'react';
 import type { Todo } from '../types';
 
@@ -31,20 +30,24 @@ export const TodoReminder: React.FC<TodoReminderProps> = ({
           {todos.length}
         </span>
       </div>
-      <div className="space-y-2">
-        {todos.map(todo => (
-          <div
-            key={todo.id}
-            className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 cursor-default hover:bg-gray-50 px-2 rounded-lg transition-colors"
-            onClick={() => onTodoClick?.(todo)}
-          >
-            <span className="text-sm text-gray-700">{todo.title}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColors[todo.priority]}`}>
-              {typeLabels[todo.type]}
-            </span>
-          </div>
-        ))}
-      </div>
+      {todos.length === 0 ? (
+        <div className="text-sm text-gray-400 py-4 text-center">暂无待办</div>
+      ) : (
+        <div className="space-y-2">
+          {todos.map((todo) => (
+            <div
+              key={todo.id}
+              className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 px-2 rounded-lg transition-colors"
+              onClick={() => onTodoClick?.(todo)}
+            >
+              <span className="text-sm text-gray-700 truncate mr-2">{todo.title}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${priorityColors[todo.priority]}`}>
+                {typeLabels[todo.type]}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

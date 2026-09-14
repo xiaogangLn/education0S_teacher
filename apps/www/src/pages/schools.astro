@@ -1,0 +1,157 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="学校合作"
+  description="EducationOS 教育版不公开注册。由我们导入学校、教师与学生，系统内零收费。扫码添加商务老师开通。"
+  path="/schools"
+>
+  <section class="hero">
+    <div class="container center">
+      <h1 class="reveal">学校合作</h1>
+      <p class="lead muted reveal reveal-delay-1">
+        教育版不公开注册 · 零收费导入师生 · 模型按合同配置
+      </p>
+      <a class="btn btn-outline-aqua reveal reveal-delay-2" href="#qr">添加商务老师</a>
+    </div>
+  </section>
+
+  <section class="section" id="qr" aria-labelledby="qr-title">
+    <div class="container qr-wrap">
+      <div class="copy reveal">
+        <h2 id="qr-title">怎么开通</h2>
+        <ol>
+          <li>扫码添加商务老师</li>
+          <li>确认学校与合同</li>
+          <li>Admin 导入师生后即可登录</li>
+        </ol>
+        <p class="warn muted">请勿用学校账号去点「免费注册」——那会开成商业个人空间。</p>
+      </div>
+      <figure class="qr reveal reveal-delay-2">
+        <img src="/wechat/school-qr.svg" width="220" height="220" alt="扫码添加 EducationOS 商务老师微信，开通教育版" />
+        <figcaption>扫码开通教育版</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section compare">
+    <div class="container grid">
+      <article class="reveal">
+        <h3>商业版 · 老师个人</h3>
+        <p class="muted">
+          自助注册并邮箱确认，默认基础版；可升级 Pro / Turbo。数据归属个人空间，支持邮箱验证码重置密码。
+        </p>
+      </article>
+      <article class="reveal reveal-delay-1">
+        <h3>教育版 · 行政学校</h3>
+        <p class="muted">
+          线下合作、整校导入，系统内零收费；可含审核中心、领导视窗，以及按校开通的 OpenMAIC
+          本地化课件引擎（按合同配置）。
+        </p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 4.5rem 0 1rem;
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 0.7rem;
+    font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+    letter-spacing: -0.03em;
+  }
+
+  .lead {
+    margin: 0 auto;
+    max-width: 32rem;
+  }
+
+  .center .btn {
+    margin-top: 1.35rem;
+  }
+
+  .qr-wrap {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: grid;
+    gap: 0.55rem;
+    color: var(--text-muted);
+  }
+
+  .warn {
+    margin: 1.25rem 0 0;
+    font-size: 0.9rem;
+  }
+
+  .qr {
+    margin: 0;
+    justify-self: center;
+    text-align: center;
+    padding: 1.25rem;
+    border-radius: 18px;
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    background: rgba(10, 14, 20, 0.55);
+    box-shadow: 0 0 48px rgba(94, 234, 212, 0.12);
+  }
+
+  .qr img {
+    margin-inline: auto;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  figcaption {
+    margin-top: 0.85rem;
+    color: var(--aqua);
+    font-size: 0.9rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .grid article {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.25rem;
+    background: rgba(10, 14, 20, 0.4);
+  }
+
+  .grid h3 {
+    margin: 0 0 0.45rem;
+    font-size: 1.1rem;
+  }
+
+  .grid p {
+    margin: 0;
+  }
+
+  @media (max-width: 800px) {
+    .qr-wrap,
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

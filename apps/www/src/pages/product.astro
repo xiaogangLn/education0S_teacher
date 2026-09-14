@@ -1,0 +1,420 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { links, productFeatures, productTrustNotes } from '@/lib/site';
+---
+
+<BaseLayout
+  title="产品"
+  description="EducationOS 产品能力：五阶段生成、个人备课习惯（文风指纹）、智能组卷与作业、拍照批改、学情画像、知识库与可选 OpenMAIC 课件引擎；商业自助与学校教育版双轨开通。"
+  path="/product"
+>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow aqua reveal">产品</p>
+        <h1 class="reveal">从备课到阅卷，越用越像你自己</h1>
+        <p class="lead muted reveal reveal-delay-1">
+          五阶段可控生成，注入个人教案习惯；组卷分发、拍照批改、学情画像一站完成。
+          课件可按需旁路 OpenMAIC（校内本地化），未开通则走原生工作流。
+        </p>
+        <div class="cta reveal reveal-delay-2">
+          <a class="btn btn-outline-aqua" href={links.start}>开始使用 →</a>
+          <a class="btn btn-ghost" href="/pricing">查看定价</a>
+        </div>
+      </div>
+      <aside class="panel reveal reveal-delay-2" aria-label="工作台示意">
+        <div class="panel-top">
+          <span>老师工作台</span>
+          <span class="status">五阶段 · 进行中</span>
+        </div>
+        <p class="topic">课题：光合作用的过程与意义 · 初中生物</p>
+        <div class="tiles">
+          <div>教案 · 习惯注入</div>
+          <div>课件 · OpenMAIC / 原生</div>
+          <div>试卷 · 25 题</div>
+          <div>批改 · 32/40</div>
+          <div>画像 · 班级薄弱点</div>
+          <div>知识库 · 已归档</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section features" aria-labelledby="features-title">
+    <div class="container">
+      <h2 id="features-title" class="visually-hidden">产品能力</h2>
+      {
+        productFeatures.map((f, i) => (
+          <article class={`feature reveal reveal-delay-${(i % 4) + 1}`}>
+            <div class="text">
+              <h3>
+                <span class="n">{f.n}</span>
+                {f.title}
+              </h3>
+              <p class="lead muted">{f.lead}</p>
+              <ul>
+                {f.points.map((p) => (
+                  <li>{p}</li>
+                ))}
+              </ul>
+            </div>
+            <div class="visual" aria-hidden="true">
+              {f.visual === 'steps' && (
+                <div class="steps">
+                  {['课题', '学情', '大纲', '正文', '精修'].map((label, idx) => (
+                    <span class:list={[{ on: idx === 2 }]}>{label}</span>
+                  ))}
+                </div>
+              )}
+              {f.visual === 'style' && (
+                <div class="style">
+                  <p>文风指纹</p>
+                  <ul>
+                    <li>口吻 · 简洁务实</li>
+                    <li>教案 · 点明易错 · 例题变式</li>
+                    <li>禁令 · 少套话三维目标</li>
+                  </ul>
+                </div>
+              )}
+              {f.visual === 'exam' && (
+                <div class="exam">
+                  <p>难度 · 中 · 选择题 10 · 解答 4</p>
+                  <strong>25 题</strong>
+                  <span>约 45 分钟 · 可打印分发</span>
+                </div>
+              )}
+              {f.visual === 'grade' && (
+                <div class="grade">
+                  <strong>92</strong>
+                  <span>/100</span>
+                  <p>已批改 · 32/40 · 支持扫码上传</p>
+                </div>
+              )}
+              {f.visual === 'radar' && (
+                <div class="radar">
+                  <p>班级画像 · 五维</p>
+                  <div class="bars">
+                    <i style="--h:70%" />
+                    <i style="--h:55%" />
+                    <i style="--h:82%" />
+                    <i style="--h:48%" />
+                    <i style="--h:66%" />
+                  </div>
+                </div>
+              )}
+              {f.visual === 'engine' && (
+                <div class="engine">
+                  <p><strong>知识库</strong> 教材 · 课件 · 模板</p>
+                  <p><strong>OpenMAIC</strong> 可选课件引擎</p>
+                  <p class="muted-line">额度用尽 → 自动回退原生流程</p>
+                </div>
+              )}
+              {f.visual === 'access' && (
+                <div class="access">
+                  <p><strong>商业</strong> 自助注册 · 邮箱确认</p>
+                  <p><strong>教育</strong> 扫码合作 · 整校导入</p>
+                  <p class="muted-line">图码 + 人机 · 邮箱重置密码</p>
+                </div>
+              )}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section bottom">
+    <div class="container">
+      <ul class="trust">
+        {
+          productTrustNotes.map((note) => (
+            <li class="muted">{note}</li>
+          ))
+        }
+      </ul>
+      <div class="bottom-row">
+        <p class="muted">准备好了？用真实课题跑通一次五阶段生成。</p>
+        <a class="btn btn-primary" href={links.start}>开始使用 →</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: 4.5rem 0 2rem;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -0.03em;
+  }
+
+  .lead {
+    margin: 0.9rem 0 1.4rem;
+    max-width: 32rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .panel {
+    border: 1px solid rgba(94, 234, 212, 0.28);
+    border-radius: 18px;
+    padding: 1.15rem;
+    background: rgba(10, 14, 20, 0.55);
+    box-shadow: 0 0 48px rgba(94, 234, 212, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .panel-top {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .status {
+    color: var(--aqua);
+  }
+
+  .topic {
+    margin: 0 0 1rem;
+    font-weight: 600;
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .tiles div {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .feature {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 2rem;
+    align-items: center;
+    padding: 2.75rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .feature h3 {
+    margin: 0 0 0.55rem;
+    font-size: 1.45rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+  }
+
+  .n {
+    color: var(--aqua);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  .feature ul {
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .feature li {
+    position: relative;
+    padding-left: 1rem;
+    color: var(--text-muted);
+  }
+
+  .feature li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--aqua);
+  }
+
+  .visual > div {
+    border: 1px solid rgba(94, 234, 212, 0.22);
+    border-radius: 16px;
+    padding: 1.25rem;
+    background: rgba(10, 14, 20, 0.5);
+    min-height: 8.5rem;
+  }
+
+  .steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .steps span {
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  .steps .on {
+    border-color: var(--aqua);
+    color: var(--aqua);
+    box-shadow: 0 0 18px var(--aqua-soft);
+  }
+
+  .exam strong,
+  .grade strong {
+    display: block;
+    font-size: 2.4rem;
+    color: var(--aqua);
+    line-height: 1;
+    margin: 0.4rem 0;
+  }
+
+  .grade {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .grade span {
+    color: var(--text-muted);
+  }
+
+  .bars {
+    display: flex;
+    align-items: end;
+    gap: 0.45rem;
+    height: 4.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .bars i {
+    flex: 1;
+    height: var(--h);
+    border-radius: 6px 6px 2px 2px;
+    background: linear-gradient(180deg, var(--aqua), rgba(94, 234, 212, 0.2));
+    display: block;
+  }
+
+  .knowledge ul,
+  .style ul {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .knowledge li,
+  .style li {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .access p,
+  .engine p {
+    margin: 0 0 0.55rem;
+    color: var(--text-muted);
+  }
+
+  .access strong,
+  .engine strong {
+    color: var(--aqua);
+    font-weight: 650;
+    margin-right: 0.35rem;
+  }
+
+  .access .muted-line,
+  .engine .muted-line {
+    margin-top: 0.85rem;
+    font-size: 0.85rem;
+    opacity: 0.85;
+  }
+
+  .trust {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .trust li {
+    position: relative;
+    padding-left: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .trust li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background: var(--aqua);
+  }
+
+  .bottom-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    padding-top: 1.5rem;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  @media (max-width: 860px) {
+    .hero-grid,
+    .feature {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

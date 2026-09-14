@@ -1,11 +1,12 @@
-// components/ReviewItem.tsx
 import React from 'react';
 import { Button, Tag } from 'antd';
+import { CheckOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons';
 import type { ReviewItem as ReviewItemType } from '../types';
-import { statusColorMap, statusLabelMap } from '../constants';
+import { statusLabelMap } from '../constants';
 
 interface ReviewItemProps {
   item: ReviewItemType;
+  actionLoading?: boolean;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
   onViewDetail?: (id: string) => void;
@@ -14,14 +15,13 @@ interface ReviewItemProps {
 
 export const ReviewItem: React.FC<ReviewItemProps> = ({
   item,
+  actionLoading = false,
   onApprove,
   onReject,
   onViewDetail,
   onResubmit,
 }) => {
-  const statusColor = statusColorMap[item.status];
   const statusLabel = statusLabelMap[item.status];
-
   const isRejected = item.status === 'rejected';
   const isPending = item.status === 'pending' || item.status === 'reviewing';
 
@@ -60,18 +60,22 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
             <Button
               size="small"
               type="primary"
-              className="rounded-full"
+              icon={<CheckOutlined />}
+              className="rounded-full bg-green-500 hover:!bg-green-600"
+              loading={actionLoading}
               onClick={() => onApprove?.(item.id)}
             >
-              ✅ 通过
+              通过
             </Button>
             <Button
               size="small"
               danger
+              icon={<CloseOutlined />}
               className="rounded-full"
+              disabled={actionLoading}
               onClick={() => onReject?.(item.id)}
             >
-              📝 驳回
+              驳回
             </Button>
           </>
         )}
@@ -80,17 +84,19 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({
             size="small"
             type="primary"
             className="rounded-full"
+            loading={actionLoading}
             onClick={() => onResubmit?.(item.id)}
           >
-            📝 重新提交
+            重新提交
           </Button>
         )}
         <Button
           size="small"
-          className="rounded-full"
+          type="link"
+          icon={<EyeOutlined />}
           onClick={() => onViewDetail?.(item.id)}
         >
-          📄 查看详情
+          查看详情
         </Button>
       </div>
     </div>

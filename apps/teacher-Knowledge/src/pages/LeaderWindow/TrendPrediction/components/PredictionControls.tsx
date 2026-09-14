@@ -1,15 +1,13 @@
-// components/PredictionControls.tsx
 import React from 'react';
 import { Select, Button, Progress } from 'antd';
-import { GRADE_OPTIONS, SUBJECT_OPTIONS, WEEK_OPTIONS } from '../constants';
+import { SUBJECT_OPTIONS, WEEK_OPTIONS } from '../constants';
 
 interface PredictionControlsProps {
-  grade: string;
   subject: string;
   weeks: number;
   isStreaming: boolean;
   progress: number;
-  onGradeChange: (value: string) => void;
+  subjectOptions?: string[];
   onSubjectChange: (value: string) => void;
   onWeeksChange: (value: number) => void;
   onStart: () => void;
@@ -17,38 +15,21 @@ interface PredictionControlsProps {
 }
 
 export const PredictionControls: React.FC<PredictionControlsProps> = ({
-  grade,
   subject,
   weeks,
   isStreaming,
   progress,
-  onGradeChange,
+  subjectOptions: subjectOptionList,
   onSubjectChange,
   onWeeksChange,
   onStart,
   onStop,
 }) => {
-  // 构建选项数据
-  const gradeOptions = GRADE_OPTIONS.map((g) => ({ label: g, value: g }));
-  const subjectOptions = SUBJECT_OPTIONS.map((s) => ({ label: s, value: s }));
+  const subjectOptions = (subjectOptionList?.length ? subjectOptionList : [...SUBJECT_OPTIONS]).map((s) => ({ label: s, value: s }));
   const weekOptions = WEEK_OPTIONS.map((w) => ({ label: w.label, value: w.value }));
 
   return (
     <div className="flex-1 min-h-0 bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap items-center gap-3 overflow-y-auto">
-      {/* 年级 */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-gray-600 whitespace-nowrap">年级</span>
-        <Select
-          value={grade}
-          onChange={onGradeChange}
-          options={gradeOptions}
-          disabled={isStreaming}
-          className="min-w-[100px]"
-          size="middle"
-        />
-      </div>
-
-      {/* 学科 */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-600 whitespace-nowrap">学科</span>
         <Select
@@ -61,7 +42,6 @@ export const PredictionControls: React.FC<PredictionControlsProps> = ({
         />
       </div>
 
-      {/* 预测周期 */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-600 whitespace-nowrap">预测周期</span>
         <Select
@@ -76,9 +56,8 @@ export const PredictionControls: React.FC<PredictionControlsProps> = ({
 
       <div className="flex-1" />
 
-      {/* 按钮 */}
       <Button
-        type={isStreaming ? 'primary' : 'primary'}
+        type="primary"
         danger={isStreaming}
         onClick={isStreaming ? onStop : onStart}
         size="middle"
@@ -87,7 +66,6 @@ export const PredictionControls: React.FC<PredictionControlsProps> = ({
         {isStreaming ? '⏹ 停止预测' : '🚀 开始预测'}
       </Button>
 
-      {/* 进度条 */}
       {isStreaming && (
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Progress

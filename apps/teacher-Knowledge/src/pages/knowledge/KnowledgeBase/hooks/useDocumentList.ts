@@ -1,8 +1,10 @@
 // hooks/useDocumentList.ts
 import { useState, useMemo, useCallback } from 'react';
 import type { Document } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 export const useDocumentList = (documents: Document[]) => {
+  const navigate = useNavigate();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -30,14 +32,12 @@ export const useDocumentList = (documents: Document[]) => {
   }, []);
 
   const handleDocumentClick = useCallback((doc: Document) => {
-    console.log('打开文档:', doc.title);
-    // 实际导航逻辑
-  }, []);
+    navigate(`/knowledge/DocumentEditor?id=${doc.id}`);
+  }, [navigate]);
 
   const handleDocumentEdit = useCallback((doc: Document) => {
-    console.log('编辑文档:', doc.title);
-    // 实际编辑逻辑
-  }, []);
+    navigate(`/knowledge/DocumentEditor?id=${doc.id}`);
+  }, [navigate]);
 
   return {
     documents: filteredDocuments,

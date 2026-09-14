@@ -38,8 +38,10 @@ export const DocumentList: React.FC<DocumentListProps> = ({
             <span className="text-sm text-blue-500 cursor-default cursor-pointer" onClick={() => navigate('/knowledge/allDocuments')}>查看全部文档 →</span>
         </div>
         <div className="space-y-0">
-            {documents.map(doc => {
-            const permission = permissionLabels[doc.permission];
+            {documents.length === 0 ? (
+              <div className="text-sm text-gray-400 py-6 text-center">暂无文档，可通过上方快速创建</div>
+            ) : documents.map(doc => {
+            const permission = permissionLabels[doc.permission] || permissionLabels.personal;
             return (
                 <div
                 key={doc.id}

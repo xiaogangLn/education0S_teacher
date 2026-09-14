@@ -56,6 +56,12 @@ module.exports = {
         'fade-in-up': 'fadeInUp 1s ease-out',
         'slide-in-right': 'slideInRight 0.8s ease-out',
         'pulse-dot': 'pulse 2s infinite',
+        'gradient-shift': 'gradientShift 3s ease-in-out infinite',
+        'border-rotate': 'borderRotate 4s linear infinite',
+        'pulse-badge': 'pulseBadge 2s ease-in-out infinite',
+      },
+      transitionTimingFunction: {
+        'bounce-soft': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
       keyframes: {
         fadeInUp: {
@@ -69,6 +75,19 @@ module.exports = {
         pulse: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.3' },
+        },
+        gradientShift: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        borderRotate: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+        pulseBadge: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.12)' },
         },
       },
     },

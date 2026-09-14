@@ -17,6 +17,7 @@ export interface Student {
   id: string;
   name: string;
   studentNo: string;
+  classId?: string;
   currentClass: string;
   avatarColor?: string;
   mastery: number; // 0-100
@@ -53,14 +54,17 @@ export interface UseStudentListReturn {
     total: number;
     pagination: { current: number; pageSize: number; total: number };
     filters: FilterOptions;
-    stats: StudentStats;  // 👈 添加这一行
+    stats: StudentStats;
+    loading?: boolean;
     setFilters: (filters: Partial<FilterOptions>) => void;
     resetFilters: () => void;
     goToPage: (page: number) => void;
     setPageSize: (size: number) => void;
     onTableChange: (pagination: TablePaginationConfig) => void;
     handleCancel: () => void;
-    onViewPortrait: () => void;
+    onViewPortrait: (student: Student) => void;
+    onStudentDateils: (student: Student) => void;
+    refresh: () => void;
 }
 
 /** 组件 Props */
@@ -69,7 +73,7 @@ export interface StudentListProps {
   initialPageSize?: number;
   initialFilters?: Partial<FilterOptions>;
   onViewPortrait?: (student: Student) => void;
-  onEdit?: (student: Student) => void;
+  onDateils?: (student: Student) => void;
   onExport?: () => void;
   onAddStudent?: () => void;
   className?: string;

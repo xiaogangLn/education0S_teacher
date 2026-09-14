@@ -18,7 +18,10 @@ interface StudentTableProps {
   loading?: boolean;
   onTableChange: (pagination: TablePaginationConfig) => void;
   onViewPortrait?: (student: Student) => void;
-  onEdit?: (student: Student) => void;
+  onDateils?: (student: Student) => void;
+  onTransfer?: (student: Student) => void;
+  /** 商业版无换班列/操作 */
+  showTransfer?: boolean;
 }
 
 const StudentTable: React.FC<StudentTableProps> = ({
@@ -27,7 +30,9 @@ const StudentTable: React.FC<StudentTableProps> = ({
   loading = false,
   onTableChange,
   onViewPortrait,
-  onEdit,
+  onDateils,
+  onTransfer,
+  showTransfer = true,
 }) => {
   // ===== 表格列定义 =====
   const columns: ColumnsType<Student> = useMemo(
@@ -70,29 +75,33 @@ const StudentTable: React.FC<StudentTableProps> = ({
         width: 80,
         render: (no: string) => <span className="text-gray-600">{no}</span>,
       },
-      {
-        title: '当前班级',
-        dataIndex: 'currentClass',
-        key: 'currentClass',
-        width: 120,
-        render: (cls: string) => <span className="text-gray-600">{cls}</span>,
-      },
-      {
-        title: '换班记录',
-        key: 'transfer',
-        width: 110,
-        render: (_, record) => {
-          const count = record.transferRecords.length;
-          if (count === 0) {
-            return <span className="text-gray-400 text-xs">—</span>;
-          }
-          return (
-            <Tag color={getTransferTagColor(count)} icon={<SwapOutlined />} className="text-xs">
-              {count}次
-            </Tag>
-          );
-        },
-      },
+      ...(showTransfer
+        ? [
+            {
+              title: '当前班级',
+              dataIndex: 'currentClass',
+              key: 'currentClass',
+              width: 120,
+              render: (cls: string) => <span className="text-gray-600">{cls}</span>,
+            } as const,
+            {
+              title: '换班记录',
+              key: 'transfer',
+              width: 110,
+              render: (_: unknown, record: Student) => {
+                const count = record.transferRecords.length;
+                if (count === 0) {
+                  return <span className="text-gray-400 text-xs">—</span>;
+                }
+                return (
+                  <Tag color={getTransferTagColor(count)} icon={<SwapOutlined />} className="text-xs">
+                    {count}次
+                  </Tag>
+                );
+              },
+            } as const,
+          ]
+        : []),
       {
         title: '掌握度',
         key: 'mastery',
@@ -124,7 +133,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
       {
         title: '操作',
         key: 'action',
-        width: 140,
+        width: showTransfer ? 200 : 160,
         render: (_, record) => (
           <Space size="small">
             <Button
@@ -139,15 +148,25 @@ const StudentTable: React.FC<StudentTableProps> = ({
               type="link"
               size="small"
               className="text-gray-500 hover:text-gray-700 px-2"
-              onClick={() => onEdit?.(record)}
+              onClick={() => onDateils?.(record)}
             >
-              📝 编辑
+              📝 详情
             </Button>
+            {showTransfer ? (
+              <Button
+                type="link"
+                size="small"
+                className="text-amber-600 hover:text-amber-800 px-2"
+                onClick={() => onTransfer?.(record)}
+              >
+                换班
+              </Button>
+            ) : null}
           </Space>
         ),
       },
     ],
-    [pagination.current, pagination.pageSize, onViewPortrait, onEdit]
+    [pagination.current, pagination.pageSize, onViewPortrait, onDateils, onTransfer, showTransfer]
   );
 
   return (

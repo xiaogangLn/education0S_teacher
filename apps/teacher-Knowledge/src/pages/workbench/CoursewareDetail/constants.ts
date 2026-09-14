@@ -1,0 +1,38 @@
+// constants.ts
+import type { CoursewareDetail } from './types';
+
+export const mockCourseware: CoursewareDetail = {
+  id: 'cw-001',
+  name: '函数图像课件',
+  lessonPlanId: 'lp-001',
+  lessonPlanTitle: '二次函数图像与性质',
+  grade: '九年级',
+  className: '九年级1班',
+  subject: '数学',
+  totalPages: 15,
+  fileSize: '3.8 MB',
+  format: 'pptx',
+  status: 'reviewing',
+  version: 1,
+  createdAt: '2026-08-30 14:15',
+  updatedAt: '2026-08-30 14:30',
+  slides: [
+    { id: 's1', page: 1, title: '封面', icon: '📄' },
+    { id: 's2', page: 2, title: '学习目标', icon: '📊' },
+    { id: 's3', page: 3, title: '情境导入', icon: '📈' },
+    { id: 's4', page: 4, title: '概念探究', icon: '📉' },
+    { id: 's5', page: 5, title: '例题精讲', icon: '📊' },
+    { id: 's6', page: 6, title: '课堂练习', icon: '📋' },
+    { id: 's7', page: 7, title: '小组讨论', icon: '💬' },
+    { id: 's8', page: 8, title: '知识总结', icon: '📝' },
+    { id: 's9', page: 9, title: '拓展延伸', icon: '🔍' },
+    { id: 's10', page: 10, title: '当堂检测', icon: '✏️' },
+    { id: 's11', page: 11, title: '课后作业', icon: '📚' },
+    { id: 's12', page: 12, title: '参考答案', icon: '✅' },
+    { id: 's13', page: 13, title: '教学反思', icon: '💡' },
+    { id: 's14', page: 14, title: '下节预告', icon: '📖' },
+    { id: 's15', page: 15, title: '结束页', icon: '🎯' },
+  ],
+  isAIGenerated: true,
+  aiPrompt: '根据教案「二次函数图像与性质」自动生成，包含 15 页教学内容',
+};

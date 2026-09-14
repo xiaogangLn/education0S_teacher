@@ -4,6 +4,7 @@ import { SearchOutlined, UnorderedListOutlined, AppstoreOutlined } from '@ant-de
 import type { PERMISSION_CONFIG, PermissionType } from '../types';
 
 interface FilterBarProps {
+  isCommercial: boolean;
   keyword: string;
   onKeywordChange: (value: string) => void;
   activePermission: PermissionType | 'all';
@@ -23,6 +24,7 @@ const permissionTabs: Array<{ key: PermissionType | 'all'; label: string }> = [
 ];
 
 export const FilterBar: React.FC<FilterBarProps> = ({
+  isCommercial,
   keyword,
   onKeywordChange,
   activePermission,
@@ -53,7 +55,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto flex-wrap">
-        {permissionTabs.map(tab => (
+        {!isCommercial && permissionTabs.map(tab => (
           <span
             key={tab.key}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap cursor-default transition-colors ${
@@ -78,12 +80,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         >
           <UnorderedListOutlined />
         </button>
-        <button
+        {/* <button
           className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-blue-50 text-blue-500' : 'text-gray-400 hover:bg-gray-100'}`}
           onClick={onViewModeToggle}
         >
           <AppstoreOutlined />
-        </button>
+        </button> */}
       </div>
     </div>
   );

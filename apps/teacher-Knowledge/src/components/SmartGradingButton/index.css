@@ -1,0 +1,35 @@
+/* ============================================================
+   文件: styles/button-animations.css
+   按钮动画 - 修复底部边框
+   ============================================================ */
+
+/* 渐变位移动画 */
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  .animate-gradient-shift {
+    animation: gradientShift 3s ease-in-out infinite;
+  }
+  
+  /* 边框旋转动画 */
+  @keyframes borderRotate {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .animate-border-rotate {
+    animation: borderRotate 4s linear infinite;
+  }
+  
+  /* 徽章脉冲动画 */
+  @keyframes pulseBadge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  
+  .animate-pulse-badge {
+    animation: pulseBadge 2s ease-in-out infinite;
+  }
