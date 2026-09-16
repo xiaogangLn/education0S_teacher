@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Spin } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { Input } from '@ui';
@@ -16,11 +16,13 @@ interface ImageCaptchaFieldProps {
   onChange?: (value: ImageCaptchaValue) => void;
   disabled?: boolean;
   className?: string;
+  /** 变化时触发重新拉取验证码（代替外层 key 重挂载，避免兄弟节点 key 冲突） */
+  refreshKey?: number;
 }
 
 /**
  * 能力：图片验证码输入（拉取/刷新/填写），样式与登录账号密码框一致。
- * 输入：受控 value / onChange。
+ * 输入：受控 value / onChange；refreshKey 变化时重新拉取。
  * 输出：通过 onChange 回传 captcha_id + captcha_code。
  */
 export const ImageCaptchaField: React.FC<ImageCaptchaFieldProps> = ({
@@ -28,11 +30,20 @@ export const ImageCaptchaField: React.FC<ImageCaptchaFieldProps> = ({
   onChange,
   disabled,
   className,
+  refreshKey,
 }) => {
   const [image, setImage] = useState('');
   const [loading, setLoading] = useState(false);
+  // 用 ref 持有 onChange：父组件传内联回调也不会影响 refresh 的稳定性
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  const inFlightRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setLoading(true);
     try {
       const res = await authService.getCaptcha();
@@ -40,22 +51,32 @@ export const ImageCaptchaField: React.FC<ImageCaptchaFieldProps> = ({
       const captchaId = payload?.captcha_id || '';
       const imageBase64 = payload?.image_base64 || '';
       setImage(imageBase64);
-      onChange?.({
+      onChangeRef.current?.({
         captcha_id: captchaId,
         captcha_code: '',
       });
     } catch {
       setImage('');
-      onChange?.({ captcha_id: '', captcha_code: '' });
+      onChangeRef.current?.({ captcha_id: '', captcha_code: '' });
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
-  }, [onChange]);
+  }, []);
+
+  // 用 ref 持有 refresh：effect 只依赖 refreshKey
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  });
+  const lastRefreshKeyRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // StrictMode 重放保护：同一个 refreshKey 只自动拉取一次
+    if (lastRefreshKeyRef.current === refreshKey) return;
+    lastRefreshKeyRef.current = refreshKey;
+    void refreshRef.current();
+  }, [refreshKey]);
 
   return (
     <div className={`${styles.row} ${className || ''}`}>

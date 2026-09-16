@@ -97,7 +97,7 @@ const Step3: React.FC<Step3Props> = ({ formData, debugConfirmUrl }) => {
         <div>
           <label className="block text-sm font-medium text-gray-800 mb-1">重发前请填写图片验证码</label>
           <ImageCaptchaField
-            key={captchaNonce}
+            refreshKey={captchaNonce}
             value={captcha}
             onChange={setCaptcha}
             disabled={sending}
@@ -106,7 +106,7 @@ const Step3: React.FC<Step3Props> = ({ formData, debugConfirmUrl }) => {
         <div>
           <label className="block text-sm font-medium text-gray-800 mb-1">人机验证</label>
           <HumanVerifySlider
-            key={humanNonce}
+            refreshKey={humanNonce}
             value={humanToken}
             onChange={setHumanToken}
             disabled={sending}

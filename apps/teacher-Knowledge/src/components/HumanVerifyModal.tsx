@@ -58,7 +58,7 @@ export const HumanVerifyModal: React.FC<HumanVerifyModalProps> = ({
       styles={{ body: { paddingTop: 8 } }}
     >
       <HumanVerifySlider
-        key={nonce}
+        refreshKey={nonce}
         value={token}
         onChange={handleChange}
         disabled={confirming}

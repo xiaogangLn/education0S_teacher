@@ -76,7 +76,7 @@ const ResetPasswordComponent = ({ onBackToLogin }: ResetPasswordProps) => {
         <div className={styles.formGroup}>
           <label>图片验证码</label>
           <ImageCaptchaField
-            key={captchaNonce}
+            refreshKey={captchaNonce}
             value={captcha}
             onChange={setCaptcha}
             disabled={isBusy}

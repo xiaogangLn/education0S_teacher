@@ -20,11 +20,13 @@ interface HumanVerifySliderProps {
   onChange?: (humanToken: string) => void;
   disabled?: boolean;
   className?: string;
+  /** 变化时触发重新拉取挑战（代替外层 key 重挂载，避免兄弟节点 key 冲突） */
+  refreshKey?: number;
 }
 
 /**
  * 能力：拼图滑块人机验证（本地自研，不依赖第三方）。
- * 输入：受控 value/onChange。
+ * 输入：受控 value/onChange；refreshKey 变化时重新拉取。
  * 输出：通过后回传 human_token。
  */
 export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
@@ -32,6 +34,7 @@ export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
   onChange,
   disabled,
   className,
+  refreshKey,
 }) => {
   const [challenge, setChallenge] = useState<ChallengeView | null>(null);
   const [loading, setLoading] = useState(false);
@@ -52,12 +55,17 @@ export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
    * 输入：无。
    * 输出：void。
    */
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+
   const refresh = useCallback(async () => {
     setLoading(true);
     setStatus('idle');
     setOffsetX(0);
     setHint('拖动滑块完成拼图验证');
-    onChange?.('');
+    onChangeRef.current?.('');
     try {
       const res = await authService.getHumanChallenge();
       const payload = extractPayload<ChallengeView>(res) || (res as any);
@@ -76,12 +84,21 @@ export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [onChange]);
+  }, []);
+
+  // 用 ref 持有 refresh：effect 只依赖 refreshKey
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  });
+  const lastRefreshKeyRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // StrictMode 重放保护：同一个 refreshKey 只自动拉取一次
+    if (lastRefreshKeyRef.current === refreshKey) return;
+    lastRefreshKeyRef.current = refreshKey;
+    void refreshRef.current();
+  }, [refreshKey]);
 
   /**
    * 能力：松手后提交偏移校验。
@@ -102,11 +119,11 @@ export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
         if (!token) throw new Error('未返回人机令牌');
         setStatus('ok');
         setHint('验证通过');
-        onChange?.(token);
+        onChangeRef.current?.(token);
       } catch (error: any) {
         setStatus('fail');
         setHint(error?.message || '验证失败，请重试');
-        onChange?.('');
+        onChangeRef.current?.('');
         setTimeout(() => {
           void refresh();
         }, 600);
@@ -114,7 +131,7 @@ export const HumanVerifySlider: React.FC<HumanVerifySliderProps> = ({
         setLoading(false);
       }
     },
-    [challenge, onChange, refresh],
+    [challenge, refresh],
   );
 
   const onPointerDown = (clientX: number) => {

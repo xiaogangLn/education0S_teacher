@@ -74,7 +74,7 @@ const Step2: React.FC<Step2Props> = ({
           图片验证码 <span className="text-red-500">*</span>
         </label>
         <ImageCaptchaField
-          key={captchaNonce}
+          refreshKey={captchaNonce}
           value={captcha}
           onChange={setCaptcha}
           disabled={isLoading}
@@ -87,7 +87,7 @@ const Step2: React.FC<Step2Props> = ({
           人机验证 <span className="text-red-500">*</span>
         </label>
         <HumanVerifySlider
-          key={humanNonce}
+          refreshKey={humanNonce}
           value={humanToken}
           onChange={setHumanToken}
           disabled={isLoading}
