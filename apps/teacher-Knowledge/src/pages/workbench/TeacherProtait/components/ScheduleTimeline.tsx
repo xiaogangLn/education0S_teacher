@@ -50,7 +50,7 @@ export const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({
       <div className="bg-white rounded-xl p-4 border border-gray-100">
         <div className="flex justify-between items-center mb-3">
           <span className="font-semibold text-[15px] text-gray-700">📋 近期动态</span>
-          <Tag className="text-xs">最新 3 条</Tag>
+          <Tag className="text-xs">最新 {timeline.length || 0} 条</Tag>
         </div>
         <div className="space-y-3">
           {timeline.map((item, idx) => (

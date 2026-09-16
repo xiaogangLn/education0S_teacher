@@ -52,6 +52,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         .markdown-renderer h3 { font-size: 18px; font-weight: 600; margin: 12px 0 6px; }
         .markdown-renderer p { margin: 10px 0; }
         .markdown-renderer ul, .markdown-renderer ol { padding-left: 26px; margin: 10px 0 14px; }
+        /* Tailwind preflight 会全局隐藏列表序号/圆点，内容区必须恢复 */
+        .markdown-renderer ul { list-style: disc outside; }
+        .markdown-renderer ol { list-style: decimal outside; }
         .markdown-renderer li { margin: 8px 0; line-height: 1.85; }
         .markdown-renderer table { font-size: 16px; }
         .markdown-renderer .katex { font-size: 1.15em; }

@@ -132,100 +132,227 @@ function serializeSections(sections: MarkdownSection[]) {
     .trim();
 }
 
-export function pickCoursewareVisibleMarkdown(stepType: string, markdown: string) {
+/** 对话区只展示本阶段有效输出，不展示空模板壳；完整稿在生成记录预览 */
+export function pickCoursewareVisibleMarkdown(
+  stepType: string, 
+  markdown: string,
+) {
   const raw = String(markdown || '');
   if (!raw.trim()) return '';
+
   const sections = parseSections(raw);
-  const match = (titles: string[]) => sections.filter((section) => (
-    section.level >= 2 && titles.some((title) => section.title.includes(title)) && !isPlaceholder(section.body)
-  ));
-  if (stepType === 'analysis') {
-    return serializeSections(match(['内容分析', '学生分析']));
-  }
-  if (stepType === 'outline') {
-    return serializeSections(match(['框架设计', '教学决策', '页面结构', '交互与呈现']));
-  }
-  if (stepType === 'content' || stepType === 'refine' || stepType === 'confirm') {
-    // 只展示本阶段页面/正文产出，不回显初始化/分析/框架
-    return serializeSections(sections.filter((section) => {
-      if (isProcessSectionTitle(section.title)) return false;
-      if (section.level === 1 && /课件模板|课件（校本）|课件设计/.test(section.title)) return false;
-      if (/基本信息|内容分析|学生分析|教学分析|框架设计|教学决策/.test(section.title)) return false;
-      if (isPlaceholder(section.body)) return false;
-      if (section.level >= 2 && !String(section.body || '').trim()) return false;
-      return Boolean(String(section.body || '').trim()) || (section.level === 0 && Boolean(section.body.trim()));
-    }));
-  }
-  return serializeSections(sections.filter((section) => {
-    if (section.level === 1 && /课件模板|课件（校本）|课件设计/.test(section.title)) return false;
-    if (section.level >= 2) {
-      if (/内容分析|框架设计|学生分析|教学分析|教学决策|页面结构|交互/.test(section.title)) {
-        return false;
-      }
-      return /基本信息|课题/.test(section.title) && !isPlaceholder(section.body);
+
+  // ──────────────────────────────────────────────
+  // 占位符 / 空壳过滤
+  // ──────────────────────────────────────────────
+  const PLACEHOLDER_RE =
+    /（\s*待[^）]*）|（\s*答案在单独卡片[^）]*）|（\s*待精修[^）]*）|（\s*待补充[^）]*）|待填写|待定稿出题|待生成|待定稿|按模板排版/;
+
+  const isPlaceholderBody = (body: string) => {
+    const text = String(body || '').replace(/<[^>]+>/g, '').trim();
+    if (!text) return true;
+    if (PLACEHOLDER_RE.test(text)) return true;
+    const stripped = text.replace(PLACEHOLDER_RE, '').replace(/[\s\-—·:：]/g, '');
+    return stripped.length === 0;
+  };
+
+  const hasBody = (section: { body: string }) =>
+    Boolean(String(section.body || '').trim()) && !isPlaceholderBody(section.body);
+
+  // ──────────────────────────────────────────────
+  // 模板壳 / 过程段 判定
+  // ──────────────────────────────────────────────
+  const isTemplateShellTitle = (title: string) => {
+    const t = stripDecor(title);
+    return /课件模板|课件（校本）|课件设计|系统课件|课件基本信息|课件名称模板|模板$/.test(t);
+  };
+
+  const isProcessSectionTitle = (title: string) => {
+    const t = stripDecor(title);
+    return (
+      /^(本阶段结果|基本信息|学科\s*\/\s*班级|选用模板|素材库已选资源|班级画像数字|已确认大纲|本阶段任务|当前已填写的模板全文|待精修正文|课题[（(]教学落点[）)]|提示|系统提交)/.test(t)
+      || /素材库已选|班级画像数字|选用模板|本阶段结果|系统提交/.test(t)
+    );
+  };
+
+  // 早期阶段标题：content/refine/confirm 阶段一律不展示
+  const isEarlierStageTitle = (title: string) => {
+    const t = stripDecor(title);
+    return /^(基本信息|内容分析|学生分析|教学分析|学情|课标|框架设计|教学决策|页面结构|交互与呈现)/.test(t);
+  };
+
+  // ──────────────────────────────────────────────
+  // 各阶段白名单
+  // 说明：白名单命中才展示；未命中一律丢弃
+  // ──────────────────────────────────────────────
+  const STAGE_TITLE_WHITELIST: Record<string, RegExp> = {
+    init: /^(基本信息|课题|学科|学段|班级|素材|选用模板|初始化|课件名称|课时)/,
+    analysis: /^(内容分析|学生分析|教学分析|学情|教材分析)/,
+    outline: /^(框架设计|教学决策|页面结构|交互与呈现|大纲|结构)/,
+    content: /^(页面|幻灯片|正文|内容|活动|练习|小结|作业|设计意图|设计说明|过渡|导语|结语|板书)/,
+    refine: /^(页面|幻灯片|正文|内容|活动|练习|小结|作业|设计意图|设计说明|过渡|导语|结语|板书|全文|终稿)/,
+    confirm: /^(页面|幻灯片|正文|内容|活动|练习|小结|作业|设计意图|设计说明|过渡|导语|结语|板书|全文|终稿)/,
+  };
+
+  const whitelist = STAGE_TITLE_WHITELIST[stepType];
+  // 未知 stepType：什么都不展示，避免误回退到全部内容
+  if (!whitelist) return '';
+
+  const kept = sections.filter((section) => {
+    // ✅ level 0：无标题首段。只有 init 阶段才作为正文保留。
+    if (section.level === 0) {
+      return stepType === 'init' && hasBody(section);
     }
-    if (section.level === 1) return !isPlaceholder(section.body);
-    return !isPlaceholder(section.body);
-  }));
+
+    // ✅ 模板壳标题（# 课件模板 / # 课件（校本） / # 系统课件 等）：一律不展示
+    if (isTemplateShellTitle(section.title)) return false;
+
+    // ✅ 过程段（选用模板 / 班级画像数字 / 本阶段结果 等）：一律不展示
+    if (isProcessSectionTitle(section.title)) return false;
+
+    // ✅ 空标题不展示
+    if (!stripDecor(section.title).trim()) return false;
+
+    // ✅ 空内容 / 占位符不展示
+    if (!hasBody(section)) return false;
+
+    // ✅ content/refine/confirm 阶段不展示早期阶段标题（防止回显）
+    if (
+      (stepType === 'content' || stepType === 'refine' || stepType === 'confirm') &&
+      isEarlierStageTitle(section.title)
+    ) {
+      return false;
+    }
+
+    // ✅ level >= 2：只保留白名单命中的 section
+    if (section.level >= 2) {
+      return whitelist.test(stripDecor(section.title));
+    }
+
+    // ✅ level 1：只有 init 阶段允许展示「初始化/基本信息/课件名称/课题」这类顶层壳；
+    // 其余阶段一律不展示任何 level 1 标题。
+    if (section.level === 1) {
+      if (stepType !== 'init') return false;
+      // 再一次防模板壳漏出
+      if (isTemplateShellTitle(section.title)) return false;
+      return /初始化|基本信息|课件名称|课题/.test(stripDecor(section.title));
+    }
+
+    return false;
+  });
+
+  return serializeSections(kept);
 }
 
 /** 对话区只展示本阶段有效输出，不展示空模板壳；完整稿在生成记录预览 */
-export function pickLessonPlanVisibleMarkdown(stepType: string, markdown: string) {
+export function pickLessonPlanVisibleMarkdown(
+  stepType: string, 
+  markdown: string,
+) {
   const raw = String(markdown || '');
   if (!raw.trim()) return '';
 
   const sections = parseSections(raw);
-  const hasBody = (section: MarkdownSection) => Boolean(String(section.body || '').replace(/（待.*?）/g, '').trim());
-  const isTemplateShellTitle = (title: string) => /教案模板|教案（校本）|系统教案/.test(stripDecor(title));
-  const isEmptyColumnTitle = (title: string) => /教学目标|教学重难点|教学过程|板书设计|作业布置|例题讲解/.test(stripDecor(title));
-  const keepInitTitle = (title: string) => /基本信息|课题|学科|学段|素材|选用模板|初始化/.test(title);
-  const isEarlierStageTitle = (title: string) => /基本信息|课题|初始化|学情|课标/.test(stripDecor(title));
-  const isContentStageTitle = (title: string) => (
-    /教学目标|教学重难点|教学过程|板书|作业|例题|教学反思|课堂小结|变式|导入|巩固/.test(stripDecor(title))
-  );
 
-  if (stepType === 'analysis') {
-    // 本阶段栏目尚未写出时返回空，绝不回退到上一阶段正文
-    return serializeSections(sections.filter((section) => (
-      section.level >= 2
-      && /学情|课标/.test(section.title)
-      && !isPlaceholder(section.body)
-      && hasBody(section)
-    )));
-  }
-  if (stepType === 'outline') {
-    return serializeSections(sections.filter((section) => (
-      section.level >= 2
-      && /教学过程|大纲/.test(section.title)
-      && !isPlaceholder(section.body)
-      && hasBody(section)
-    )));
-  }
-  if (stepType === 'content' || stepType === 'refine' || stepType === 'confirm') {
-    return serializeSections(sections.filter((section) => {
-      if (isProcessSectionTitle(section.title) && !keepInitTitle(section.title)) return false;
-      if (section.level === 1 && isTemplateShellTitle(section.title)) return false;
-      if (isEarlierStageTitle(section.title)) return false;
-      if (isPlaceholder(section.body) || !hasBody(section)) return false;
-      if (section.level >= 2) return isContentStageTitle(section.title);
-      return hasBody(section);
-    }));
-  }
+  // ──────────────────────────────────────────────
+  // 占位符 / 空壳过滤
+  // ──────────────────────────────────────────────
+  const PLACEHOLDER_RE =
+    /（\s*待[^）]*）|（\s*答案在单独卡片[^）]*）|（\s*待精修[^）]*）|（\s*待补充[^）]*）|待填写|待定稿出题|待生成|待定稿|按模板排版/;
 
-  // init：必须保留「基本信息」等已填内容（不可被 process 段误杀）
-  return serializeSections(sections.filter((section) => {
-    if (section.level === 1 && isTemplateShellTitle(section.title)) return false;
-    if (section.level >= 2 && isEmptyColumnTitle(section.title)) return false;
-    if (isProcessSectionTitle(section.title) && !keepInitTitle(section.title)) return false;
-    if (isPlaceholder(section.body)) return false;
+  const isPlaceholderBody = (body: string) => {
+    const text = String(body || '').replace(/<[^>]+>/g, '').trim();
+    if (!text) return true;
+    if (PLACEHOLDER_RE.test(text)) return true;
+    // 去掉占位符后若只剩空白/符号，也视为空
+    const stripped = text.replace(PLACEHOLDER_RE, '').replace(/[\s\-—·:：]/g, '');
+    return stripped.length === 0;
+  };
+
+  const hasBody = (section: { body: string }) =>
+    Boolean(String(section.body || '').trim()) && !isPlaceholderBody(section.body);
+
+  // ──────────────────────────────────────────────
+  // 模板壳 / 过程段 判定
+  // ──────────────────────────────────────────────
+  const isTemplateShellTitle = (title: string) => {
+    const t = stripDecor(title);
+    return /教案模板|教案（校本）|系统教案|系统教案模板|模板$/.test(t);
+  };
+
+  const isProcessSectionTitle = (title: string) => {
+    const t = stripDecor(title);
+    return (
+      /^(本阶段结果|基本信息|学科\s*\/\s*班级|选用模板|素材库已选资源|班级画像数字|已确认大纲|本阶段任务|当前已填写的模板全文|待精修正文|课题[（(]教学落点[）)]|提示|系统提交)/.test(t)
+      || /素材库已选|班级画像数字|选用模板|本阶段结果|系统提交/.test(t)
+    );
+  };
+
+  // 早期阶段标题：content/refine/confirm 阶段一律不展示
+  const isEarlierStageTitle = (title: string) => {
+    const t = stripDecor(title);
+    return /^(基本信息|课题|初始化|学情|课标|教材分析|学生分析)/.test(t);
+  };
+
+  // ──────────────────────────────────────────────
+  // 各阶段白名单
+  // 说明：白名单命中才展示；未命中一律丢弃
+  // ──────────────────────────────────────────────
+  const STAGE_TITLE_WHITELIST: Record<string, RegExp> = {
+    init: /^(基本信息|课题|学科|学段|班级|素材|选用模板|初始化|教学落点)/,
+    analysis: /^(学情|课标|教材分析|学生分析|教学目标|重难点)/,
+    outline: /^(教学过程|大纲|教学环节|课时安排|板书设计|时间分配)/,
+    content: /^(教学目标|教学重难点|教学过程|板书|作业|例题|教学反思|课堂小结|变式|导入|巩固|情境|活动|设计意图|设计说明)/,
+    refine: /^(教学目标|教学重难点|教学过程|板书|作业|例题|教学反思|课堂小结|变式|导入|巩固|情境|活动|设计意图|设计说明|全文|正文|终稿)/,
+    confirm: /^(教学目标|教学重难点|教学过程|板书|作业|例题|教学反思|课堂小结|变式|导入|巩固|情境|活动|设计意图|设计说明|全文|正文|终稿)/,
+  };
+
+  const whitelist = STAGE_TITLE_WHITELIST[stepType];
+  // 未知 stepType：什么都不展示，避免误回退到全部内容
+  if (!whitelist) return '';
+
+  const kept = sections.filter((section) => {
+    // ✅ level 0：无标题首段。只有 init 阶段才作为正文保留。
+    if (section.level === 0) {
+      return stepType === 'init' && hasBody(section);
+    }
+
+    // ✅ 模板壳标题（# 教案模板 / # 教案（校本） / # 系统教案 等）：一律不展示
+    if (isTemplateShellTitle(section.title)) return false;
+
+    // ✅ 过程段（选用模板 / 班级画像数字 / 本阶段结果 等）：一律不展示
+    if (isProcessSectionTitle(section.title)) return false;
+
+    // ✅ 空标题不展示
+    if (!stripDecor(section.title).trim()) return false;
+
+    // ✅ 空内容 / 占位符不展示
+    if (!hasBody(section)) return false;
+
+    // ✅ content/refine/confirm 阶段不展示早期阶段标题（防止回显）
+    if (
+      (stepType === 'content' || stepType === 'refine' || stepType === 'confirm') &&
+      isEarlierStageTitle(section.title)
+    ) {
+      return false;
+    }
+
+    // ✅ level >= 2：只保留白名单命中的 section
     if (section.level >= 2) {
-      return keepInitTitle(section.title) && hasBody(section);
+      return whitelist.test(stripDecor(section.title));
     }
+
+    // ✅ level 1：只有 init 阶段允许展示「初始化/基本信息/课题」这类顶层壳；
+    // 其余阶段一律不展示任何 level 1 标题。
     if (section.level === 1) {
-      return /初始化|教案/.test(section.title) || hasBody(section);
+      if (stepType !== 'init') return false;
+      return /初始化|基本信息|课题/.test(stripDecor(section.title));
     }
-    return hasBody(section);
-  }));
+
+    return false;
+  });
+
+  return serializeSections(kept);
 }
 
 export function cleanExportMarkdown(markdown: string, title?: string) {

@@ -6,7 +6,7 @@ import { knowledgeService, learningService, studentsService } from '@api/index';
 import type { LearningRecordItem } from '@api/index';
 import { extractPayload } from '@/utils/knowledgeMapper';
 import { fileToDataUrl } from '@/utils/compressImage';
-import AnnotatedHomework, { downloadAnnotatedPages } from './AnnotatedHomework';
+import AnnotatedHomework, { downloadAnnotatedPages, renderAnnotatedBlobs } from './AnnotatedHomework';
 import { QrUploadModal, useQrUploadTicket } from '@/features/qrUpload';
 import { useNavigate } from 'react-router-dom';
 import { useOrgContext } from '@/hooks/useOrgContext';
@@ -174,6 +174,11 @@ const SmartGradingPage: React.FC = () => {
     loadLearningRecords();
   }, [loadLearningRecords]);
 
+  // 进入页面时同步一次最新权益/次数，确保商业版管理员调整批改次数后立即生效
+  useEffect(() => {
+    void refreshSession().catch(() => undefined);
+  }, [refreshSession]);
+
   const handleLearningRecordChange = (id?: string) => {
     if (!id) return;
     const record = learningRecords.find((item) => item.id === id);
@@ -294,6 +299,29 @@ const SmartGradingPage: React.FC = () => {
       message.error(error?.message || '下载失败');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  // 确认批改前把原图批注渲染成 JPEG 并转存 OSS；全部失败则返回空数组，不阻塞确认
+  const uploadAnnotatedPages = async (): Promise<string[]> => {
+    if (!annotatedPages.length) return [];
+    try {
+      const rendered = await renderAnnotatedBlobs(annotatedPages, `${detail?.assignment_title || '作业'}-原图批注`);
+      const urls: string[] = [];
+      for (const item of rendered) {
+        try {
+          const file = new File([item.blob], item.fileName, { type: 'image/jpeg' });
+          const payload = extractPayload<{ url?: string }>(
+            await knowledgeService.uploadFile(file, { dir: 'grading/annotated' }),
+          );
+          if (payload?.url) urls.push(payload.url);
+        } catch {
+          // 单张失败跳过，其余继续
+        }
+      }
+      return urls;
+    } catch {
+      return [];
     }
   };
 
@@ -569,8 +597,9 @@ const SmartGradingPage: React.FC = () => {
               <Button
                 type="primary"
                 onClick={async () => {
-                  await knowledgeService.confirmGrading(detail.id, true, feedback);
-                  message.success('已确认');
+                  const annotatedImageUrls = await uploadAnnotatedPages();
+                  await knowledgeService.confirmGrading(detail.id, true, feedback, annotatedImageUrls);
+                  message.success(annotatedImageUrls.length ? '已确认，批注图已存档' : '已确认');
                   setPreviewOpen(false);
                   setDetail(null);
                   loadList();

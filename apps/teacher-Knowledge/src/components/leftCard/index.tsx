@@ -13,7 +13,10 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   onFileSelect,
   onFileClick,
   onSelectedFiles,
+  onUploadedFilesChange,
   initialPlannedFiles,
+  initialUploadedFiles,
+  taskId,
   historyMode = false,
   className = '',
 }) => {
@@ -29,6 +32,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     indeterminate,
     uploading,
     scopeLabel,
+    uploadedFiles,
     handleSearch,
     handleSearchChange,
     cancelPendingSearch,
@@ -43,13 +47,19 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     handleUpload,
     getCategoryCount,
     getSelectedFiles,
-  } = useFileSelection(initialPlannedFiles);
+  } = useFileSelection(initialPlannedFiles, initialUploadedFiles, taskId);
 
   useDeepCompareEffect(() => {
     if (onSelectedFiles) {
       onSelectedFiles(getSelectedFiles());
     }
   }, [selectedFileIds, getSelectedFiles, onSelectedFiles]);
+
+  useDeepCompareEffect(() => {
+    if (onUploadedFilesChange) {
+      onUploadedFilesChange(uploadedFiles);
+    }
+  }, [uploadedFiles, onUploadedFilesChange]);
 
   const onConfirm = () => {
     handleConfirm(onFileSelect);

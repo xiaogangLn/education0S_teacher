@@ -213,11 +213,13 @@ function triggerDownload(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function downloadAnnotatedPages(
+/** 在原图上绘制批注并导出 JPEG Blob（下载与上传 OSS 共用） */
+export async function renderAnnotatedBlobs(
   pages: Array<{ src: string; items: MarkItem[] }>,
   baseName = '原图批注',
-) {
+): Promise<Array<{ blob: Blob; fileName: string }>> {
   const safeName = String(baseName || '原图批注').replace(/[\\/:*?"<>|]+/g, '_');
+  const results: Array<{ blob: Blob; fileName: string }> = [];
   for (let index = 0; index < pages.length; index += 1) {
     const page = pages[index];
     const img = await loadImage(page.src);
@@ -240,8 +242,19 @@ export async function downloadAnnotatedPages(
       canvas.toBlob((value) => (value ? resolve(value) : reject(new Error('导出失败'))), 'image/jpeg', 0.92);
     });
     const fileName = pages.length > 1 ? `${safeName}-${index + 1}.jpg` : `${safeName}.jpg`;
-    triggerDownload(blob, fileName);
-    if (index < pages.length - 1) {
+    results.push({ blob, fileName });
+  }
+  return results;
+}
+
+export async function downloadAnnotatedPages(
+  pages: Array<{ src: string; items: MarkItem[] }>,
+  baseName = '原图批注',
+) {
+  const rendered = await renderAnnotatedBlobs(pages, baseName);
+  for (let index = 0; index < rendered.length; index += 1) {
+    triggerDownload(rendered[index].blob, rendered[index].fileName);
+    if (index < rendered.length - 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 250));
     }
   }

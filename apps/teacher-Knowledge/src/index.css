@@ -40,3 +40,14 @@
 .split-view-separator-border .sash .sash-handle:hover {
     background-color: #3b82f6 !important;
 }
+
+/* 工作台对话输入框：去掉聚焦/选择时 antd borderless 输入框的描边颜色 */
+.message-input-bar .ant-input-borderless:focus-visible,
+.message-input-bar .ant-input-affix-wrapper-borderless:focus-visible,
+.message-input-bar .ant-input-borderless:has(textarea:focus-visible),
+.message-input-bar .ant-input-affix-wrapper-borderless:has(textarea:focus-visible),
+.message-input-bar .ant-input-borderless:focus,
+.message-input-bar .ant-input-borderless:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+}

@@ -30,6 +30,19 @@ function mapRecord(item: any): LearningRecord {
   };
 }
 
+// 并发生成可能写入重复记录（同一教案+同一标题多条），列表按 教案+标题 去重，保留最新一条
+function dedupeRecords(items: LearningRecord[]): LearningRecord[] {
+  const seen = new Set<string>();
+  const result: LearningRecord[] = [];
+  for (const item of items) {
+    const key = item.lessonPlanId && item.title ? `${item.lessonPlanId}|${item.title}` : item.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+  }
+  return result;
+}
+
 export const useLearningRecords = (studentId?: string) => {
   const [records, setRecords] = useState<LearningRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,7 +56,7 @@ export const useLearningRecords = (studentId?: string) => {
     setLoading(true);
     try {
       const payload = extractPayload<{ items: any[] }>(await learningService.getList({ student_id: studentId, page: 1, page_size: 50 }));
-      setRecords((payload?.items || []).map(mapRecord));
+      setRecords(dedupeRecords((payload?.items || []).map(mapRecord)));
     } catch {
       setRecords([]);
     } finally {

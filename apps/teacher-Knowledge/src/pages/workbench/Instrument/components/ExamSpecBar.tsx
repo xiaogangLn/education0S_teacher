@@ -129,7 +129,7 @@ export function normalizeExamSpec(raw?: any, catalog?: ExamTypeDef[]): ExamSpec 
       counts[mapped] = clampCount(Number(raw[key]));
     }
   }
-  if (counts.apply == null && counts.solve != null && types.some((item) => item.key === 'apply')) {
+  if (counts.apply == null && counts.solve != null && types.some((item: ExamTypeDef) => item.key === 'apply')) {
     counts.apply = counts.solve;
   }
   if (!Object.keys(counts).length) {
@@ -168,6 +168,66 @@ export function splitExamMarkdown(markdown: string) {
   };
 }
 
+const EXAM_OPTION_LINE_RE = /^[A-D]\s*[.．、]/;
+const EXAM_STEM_LINE_RE = /^\d+\s*[.．、)]/;
+
+/** 题号统一成全角「1．」：避免 markdown 把「1. 」解析成有序列表后序号被全局样式隐藏 */
+function formatExamStemLine(line: string): string {
+  return line.replace(/^(\d+)\s*[.．、)]\s*/, '$1．');
+}
+
+/** 把一行里挤在一起的选项拆开："（ ）A. xx B. xx" → 换行分隔（不拆英文单词） */
+function splitInlineExamOptions(line: string): string[] {
+  return String(line || '')
+    .replace(/([^\nA-Za-z])[ \t]*(?=[A-D]\s*[.．、])/g, '$1\n')
+    .split('\n')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * 试卷排版：题干与每个选项独立成段。
+ * markdown 会把连续非空行合并成一段，导致选择题选项全部挤成一行；
+ * 在渲染/导出前把题干、选项规范成独立段落，题干和选项即可明显区分。
+ */
+export function layoutExamQuestions(text: string): string {
+  const source = String(text || '');
+  if (!source.trim()) return source;
+  const out: string[] = [];
+  const blankBefore = () => {
+    if (out.length && out[out.length - 1] !== '') out.push('');
+  };
+  for (const rawLine of source.split('\n')) {
+    const line = rawLine.trim();
+    // 标题/引用/表格/列表等结构行原样保留
+    if (/^(#{1,6}\s|>\s|\||[-*+]\s)/.test(line)) {
+      blankBefore();
+      out.push(rawLine);
+      continue;
+    }
+    if (line) {
+      const segments = splitInlineExamOptions(line);
+      // 行中任意位置出现选项标记（题干+A、C+D 等）都拆开
+      const midLineOption = segments.length > 1 && segments.slice(1).some((part) => EXAM_OPTION_LINE_RE.test(part));
+      if (midLineOption) {
+        for (const part of segments) {
+          blankBefore();
+          out.push(formatExamStemLine(part));
+        }
+        continue;
+      }
+      if (EXAM_OPTION_LINE_RE.test(line) || EXAM_STEM_LINE_RE.test(line)) {
+        // 单独的选项行 / 题干行：独立成段
+        blankBefore();
+        out.push(formatExamStemLine(line));
+        continue;
+      }
+    }
+    out.push(rawLine);
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
 type MarkdownSection = { level: number; title: string; body: string };
 
 function splitMarkdownSections(markdown: string): MarkdownSection[] {
@@ -204,29 +264,120 @@ function serializeMarkdownSections(sections: MarkdownSection[]) {
 
 const EXAM_QUESTION_TITLES = ['选择题', '填空题', '解答题', '应用题', '阅读理解', '完形填空', '完型填空', '作文', '材料分析题', '问答题', '综合题', '语法填空'];
 
-export function pickExamVisibleMarkdown(stepType: string, markdown: string) {
+function stripDecor(text: string) {
+  return String(text || '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')  // 移除 emoji
+    .replace(/[📝📊📌📄✨🎨💡✅]/g, '')                            // 移除常见装饰符号
+    .replace(/\s+/g, ' ')                                       // 多空格合并
+    .trim();
+}
+
+/** 对话区只展示本阶段有效输出，不展示空模板壳；完整稿在生成记录预览 */
+export function pickExamVisibleMarkdown(
+  stepType: string, 
+  markdown: string,
+) {
+
   const paper = splitExamMarkdown(markdown).paper;
   if (!paper.trim()) return '';
   const sections = splitMarkdownSections(paper);
-  const matchTitles = (titles: string[]) => sections.filter((section) => (
-    titles.some((title) => section.title.includes(title))
-  ));
-  if (stepType === 'init') {
-    return serializeMarkdownSections(sections.filter((section) => {
-      if (section.level === 1 && /试卷模板|试卷（校本）/.test(section.title)) return false;
-      if (section.level >= 2 && /学情|题型与难度|选择|填空|解答|应用|阅读|完形|完型|作文|材料|问答|综合|参考答案/.test(section.title)) return false;
-      return Boolean(section.body.replace(/（待填写）/g, '').trim() || (section.level === 0 && section.body.trim()));
-    }));
-  }
-  if (stepType === 'analysis') {
-    return serializeMarkdownSections(matchTitles(['学情与课标', '学情']));
-  }
-  if (stepType === 'outline') {
-    return serializeMarkdownSections(matchTitles(['题型与难度']));
-  }
-  return serializeMarkdownSections(
-    matchTitles(EXAM_QUESTION_TITLES).filter((section) => !/待填写|待定稿出题/.test(section.body)),
-  );
+
+  // ──────────────────────────────────────────────
+  // 占位符 / 空壳过滤
+  // ──────────────────────────────────────────────
+  const PLACEHOLDER_RE =
+    /（\s*待[^）]*）|（\s*答案在单独卡片[^）]*）|（\s*待精修[^）]*）|（\s*待补充[^）]*）|待填写|待定稿出题|待定稿|待生成|按模板排版/;
+
+  const isPlaceholderBody = (body: string) => {
+    const text = String(body || '').replace(/<[^>]+>/g, '').trim();
+    if (!text) return true;
+    if (PLACEHOLDER_RE.test(text)) return true;
+    const stripped = text.replace(PLACEHOLDER_RE, '').replace(/[\s\-—·:：]/g, '');
+    return stripped.length === 0;
+  };
+
+  const hasBody = (section: { body: string }) =>
+    Boolean(String(section.body || '').trim()) && !isPlaceholderBody(section.body);
+
+  // ──────────────────────────────────────────────
+  // 模板壳 / 过程段 / 答案段 判定
+  // ──────────────────────────────────────────────
+  const isTemplateShellTitle = (title: string) => {
+    const t = stripDecor(title);
+    return /试卷模板|试卷（校本）|系统试卷|试卷基本信息|试卷名称模板|试卷壳|模板$/.test(t);
+  };
+
+  const isProcessSectionTitle = (title: string) => {
+    const t = stripDecor(title);
+    return (
+      /^(本阶段结果|基本信息|学科\s*\/\s*班级|选用模板|素材库已选资源|班级画像数字|已确认大纲|本阶段任务|当前已填写的模板全文|待精修正文|课题[（(]教学落点[）)]|提示|系统提交)/.test(t)
+      || /素材库已选|班级画像数字|选用模板|本阶段结果|系统提交/.test(t)
+    );
+  };
+
+  const isAnswerSection = (title: string) =>
+    /参考答案|答案与解析|答案/.test(stripDecor(title));
+
+  // ──────────────────────────────────────────────
+  // 各阶段白名单
+  // 说明：白名单命中才展示；未命中一律丢弃
+  // ──────────────────────────────────────────────
+  const STAGE_TITLE_WHITELIST: Record<string, RegExp> = {
+    init: /^(试卷名称|学科|学段|班级|选用模板|素材库|初始化|考试范围|命题依据|考查重点)/,
+    analysis: /^(学情|课标|命题依据|考查重点|教材分析|学生分析)/,
+    outline: /^(题型|难度|分值|题量|大纲|结构|时间分配)/,
+    content: new RegExp(`^(${EXAM_QUESTION_TITLES.join('|')})`),
+    refine: new RegExp(
+      `^(${EXAM_QUESTION_TITLES.join('|')}|参考答案|答案与解析|全文|正文|终稿)`,
+    ),
+    confirm: new RegExp(
+      `^(${EXAM_QUESTION_TITLES.join('|')}|参考答案|答案与解析|全文|正文|终稿)`,
+    ),
+  };
+
+  const whitelist = STAGE_TITLE_WHITELIST[stepType];
+  // 未知 stepType：什么都不展示，避免误回退到全部内容
+  if (!whitelist) return '';
+
+  const kept = sections.filter((section) => {
+    // ✅ level 0：无标题首段。只有 init 阶段才作为正文保留。
+    if (section.level === 0) {
+      return stepType === 'init' && hasBody(section);
+    }
+
+    // ✅ 模板壳标题（# 试卷模板 / # 试卷（校本） / # 系统试卷 等）：一律不展示
+    if (isTemplateShellTitle(section.title)) return false;
+
+    // ✅ 过程段（选用模板 / 班级画像数字 / 本阶段结果 等）：一律不展示
+    if (isProcessSectionTitle(section.title)) return false;
+
+    // ✅ 空标题不展示
+    if (!stripDecor(section.title).trim()) return false;
+
+    // ✅ 空内容 / 占位符不展示
+    if (!hasBody(section)) return false;
+
+    // ✅ content 阶段不展示答案区（避免提前泄露答案）
+    if (stepType === 'content' && isAnswerSection(section.title)) return false;
+
+    // ✅ level >= 2：只保留白名单命中的 section
+    if (section.level >= 2) {
+      return whitelist.test(stripDecor(section.title));
+    }
+
+    // ✅ level 1：只有 init 阶段允许展示「初始化/基本信息/试卷名称/课题」这类顶层壳；
+    // 其余阶段一律不展示任何 level 1 标题。
+    if (section.level === 1) {
+      if (stepType !== 'init') return false;
+      // 再一次防模板壳漏出
+      if (isTemplateShellTitle(section.title)) return false;
+      return /初始化|基本信息|试卷名称|课题/.test(stripDecor(section.title));
+    }
+
+    return false;
+  });
+
+  return serializeMarkdownSections(kept);
 }
 
 export function examSpecTotal(spec: ExamSpec, subject?: string, catalog?: ExamTypeDef[]) {

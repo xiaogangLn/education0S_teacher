@@ -327,6 +327,9 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           padding-left: 1.4em;
           margin: 0.55em 0 0.85em;
         }
+        /* Tailwind preflight 会全局隐藏列表序号/圆点，内容区必须恢复，否则题干「1.」不可见 */
+        .step-body ul, .streaming-markdown ul { list-style: disc outside; }
+        .step-body ol, .streaming-markdown ol { list-style: decimal outside; }
         .step-body li, .streaming-markdown li {
           margin: 0.28em 0;
           line-height: 1.75;

@@ -1,5 +1,5 @@
 // components/centerCard/index.tsx
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import {
   EditOutlined,
   ExportOutlined,
@@ -18,11 +18,22 @@ import { ExamSpecModal, pickExamVisibleMarkdown, type ExamSpec, type ExamTypeDef
 import { pickCoursewareVisibleMarkdown, pickLessonPlanVisibleMarkdown } from '@/utils/exportByTemplate';
 import { localizeThinkingText } from '@/utils/localizeThinking';
 
+/**
+ * ✅ FIX: 只对「当前正在流式生成的这一步」做内容覆盖，
+ * 其它 step 严格使用自身的 step.content，避免已完成阶段被污染。
+ * ✅ 对话区只展示本阶段有效输出：
+ * - 当前正在流式生成的阶段：屏蔽旧内容
+ * - 已完成阶段：只 pick 本阶段的可见内容
+ * - 其它阶段：严格使用 step.content
+ */
 function displayStageSteps(
   steps: StepData[],
   template?: TemplateType | null,
   override?: { stepIndex: number; content: string },
+  regeneratingStepIndex?: number | null,
 ): StepData[] {
+  console.log('[displayStageSteps] regeneratingStepIndex =', regeneratingStepIndex);  // ✅ 放开头，任何情况都能看到
+
   const source = steps.length > 0 ? steps : [{
     id: 'temp',
     title: '生成中',
@@ -33,19 +44,35 @@ function displayStageSteps(
   }];
 
   return source.map((step, index) => {
-    // 有 override 时必须用它（含空字符串），避免进入下一阶段仍回落到上一阶段正文
-    const raw = (override && index === override.stepIndex)
-      ? String(override.content ?? '')
+    // ✅ 当前正在产出新内容（首次进入或重新生成）→ 强行为空
+    if (regeneratingStepIndex === index) {
+      console.log('[displayStageSteps] 屏蔽 step', index, 'type=', step.type);
+      return { ...step, content: '' };
+    }
+
+    // ✅ 只有被 override 的那一步才用流式内容，其余用 step.content
+    const isOverriding = !!override && index === override.stepIndex;
+    const raw = isOverriding
+      ? String(override!.content ?? '')
       : (step.content || '');
+
+    // ✅ 流式覆盖阶段不做 pick；已完成阶段才根据模板做可见性抽取
     let content = raw;
     if (!raw.trim()) {
       content = '';
-    } else if (template === '试卷模板') {
-      content = pickExamVisibleMarkdown(step.type, raw);
-    } else if (template === '课件模板') {
-      content = pickCoursewareVisibleMarkdown(step.type, raw);
-    } else if (template === '教案模板') {
-      content = pickLessonPlanVisibleMarkdown(step.type, raw);
+    } else if (!isOverriding) {
+      if (template === '试卷模板') {
+        content = pickExamVisibleMarkdown(step.type, raw);
+      } else if (template === '课件模板') {
+        content = pickCoursewareVisibleMarkdown(step.type, raw);
+      } else if (template === '教案模板') {
+        content = pickLessonPlanVisibleMarkdown(step.type, raw);
+      }
+    }
+
+    // ✅ pick 后为空就置空，绝不回退到 raw
+    if (!content.trim()) {
+      content = '';
     }
     return { ...step, content };
   });
@@ -63,7 +90,7 @@ const MessageInputBar: React.FC<{
   const cannotSend = sendDisabled ?? (!value.trim() || disabled);
   return (
     <div
-      className={`flex items-end gap-3 rounded-2xl border border-gray-200/80 bg-white px-4 py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] ${
+      className={`message-input-bar flex items-end gap-3 rounded-2xl border border-gray-200/80 bg-white px-4 py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] ${
         disabled ? 'opacity-50' : ''
       }`}
     >
@@ -125,11 +152,15 @@ interface CenterPanelProps {
   onRegenerateStep?: () => void;
   onSendMessage?: (message: string) => void;
   onSaveToKnowledge?: () => void;
+  regeneratingStepIndex?: number | null;
+  setRegeneratingStepIndex?: (stepIndex: number | null) => void;
 }
 
 export const CenterPanel: React.FC<CenterPanelProps> = ({
   variant = 'generate',
   steps = [],
+  regeneratingStepIndex = null,
+  setRegeneratingStepIndex,
   currentStepIndex = 0,
   hasSteps = false,
   isStreaming = false,
@@ -170,18 +201,45 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
     }
   }, [chatMessages, currentStepIndex]);
 
-  /** 当前未完成阶段：把确认按钮挂在对应助手消息上（没有 step 时退化为最后一条助手消息） */
-  const confirmHostMessageId = (() => {
+  /**
+   * ✅ FIX: 确认按钮挂载逻辑
+   * - 只在当前步骤未完成且不在流式中时才需要挂按钮
+   * - 优先匹配 step === currentStepIndex 且内容非空的最后一条助手消息
+   * - 若所有助手消息都没有 step 字段（老数据兼容），退化到"最后一条非空助手消息"
+   */
+  const confirmHostMessageId = useMemo(() => {
     if (isStreaming) return null;
     const current = steps[currentStepIndex];
     if (!current || current.status === 'completed') return null;
+
     const assistants = chatMessages.filter((item) => item.role === 'assistant');
-    const matched = assistants.filter((item) => item.step === currentStepIndex);
+    if (!assistants.length) return null;
+
+    const matched = assistants.filter(
+      (item) => item.step === currentStepIndex && (item.content || '').trim().length > 0,
+    );
     if (matched.length) return matched[matched.length - 1].id;
+
     const hasAnyStep = assistants.some((item) => typeof item.step === 'number');
-    if (!hasAnyStep && assistants.length) return assistants[assistants.length - 1].id;
+    if (!hasAnyStep) {
+      const nonEmpty = assistants.filter((item) => (item.content || '').trim().length > 0);
+      if (nonEmpty.length) return nonEmpty[nonEmpty.length - 1].id;
+    }
     return null;
-  })();
+  }, [isStreaming, steps, currentStepIndex, chatMessages]);
+
+  /**
+   * ✅ FIX: 只针对「当前正在流式生成的这条消息」构造 override，
+   * 其他消息完全走 step.content。
+   */
+  const buildOverrideForMessage = (msg: ChatMessage) => {
+    const targetStep = typeof msg.step === 'number' ? msg.step : currentStepIndex;
+    const isMsgStreaming =
+      isStreaming &&
+      (msg.step === currentStepIndex || confirmHostMessageId === msg.id);
+    if (!isMsgStreaming) return undefined;
+    return { stepIndex: targetStep, content: msg.content || '' };
+  };
 
   const renderResearchMessage = (msg: ChatMessage) => {
     const isUser = msg.role === 'user';
@@ -322,91 +380,112 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
 
     return (
       <div className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-      <Avatar
-        size={32}
-        icon={isUser ? <UserOutlined /> : <RobotOutlined />}
-        className={isUser ? 'bg-blue-500 flex-shrink-0' : 'bg-purple-500 flex-shrink-0'}
-      />
-      <div className={`flex-1 max-w-[85%] ${isUser ? 'flex flex-col items-end' : ''}`}>
-        <div className={`flex items-center gap-2 mb-1 ${isUser ? 'justify-end' : ''}`}>
-          <span className="text-xs font-medium text-gray-600">
-            {isUser ? '我' : 'AI 助手'}
-          </span>
-          <span className="text-xs text-gray-400">{msg.timestamp}</span>
-          {msg.step !== undefined && (
-            <Tag color="blue" className="text-[10px]">
-              步骤 {msg.step + 1}
-            </Tag>
+        <Avatar
+          size={32}
+          icon={isUser ? <UserOutlined /> : <RobotOutlined />}
+          className={isUser ? 'bg-blue-500 flex-shrink-0' : 'bg-purple-500 flex-shrink-0'}
+        />
+        <div className={`flex-1 max-w-[85%] ${isUser ? 'flex flex-col items-end' : ''}`}>
+          <div className={`flex items-center gap-2 mb-1 ${isUser ? 'justify-end' : ''}`}>
+            <span className="text-xs font-medium text-gray-600">
+              {isUser ? '我' : 'AI 助手'}
+            </span>
+            <span className="text-xs text-gray-400">{msg.timestamp}</span>
+            {msg.step !== undefined && (
+              <Tag color="blue" className="text-[10px]">
+                步骤 {msg.step + 1}
+              </Tag>
+            )}
+          </div>
+          {isUser ? (
+            // 用户消息 - 宽度自适应，最大宽度 200px，从右往左增长
+            <div className="max-w-[200px] rounded-2xl px-4 py-3 bg-blue-500 text-white rounded-br-sm">
+              <div className="text-sm whitespace-pre-wrap break-words">
+                {msg.content}
+              </div>
+            </div>
+          ) : (
+            // AI 消息
+            <div className="rounded-2xl px-4 py-3 bg-white border border-gray-200 rounded-bl-sm shadow-sm w-full">
+              <div className="prose max-w-none text-[17px] leading-8">
+                <StepRenderer
+                  // ✅ FIX: 只对「当前流式消息」做 override，其它消息保持 steps 原样
+                  steps={displayStageSteps(
+                    steps,
+                    selectedTemplate,
+                    buildOverrideForMessage(msg),
+                    regeneratingStepIndex,
+                  )}
+                  // ✅ FIX: 流式时启用逐字渲染，避免整块 Markdown 重复解析导致“回退重写”
+                  typewriter={
+                    isStreaming &&
+                    (msg.step === currentStepIndex || confirmHostMessageId === msg.id)
+                  }
+                  showConfirm={confirmHostMessageId === msg.id}
+                  confirmText={steps[currentStepIndex]?.confirmText || '进入下一步'}
+                  onConfirm={() => onConfirmStep?.()}
+                    onRegenerate={() => {
+                      setRegeneratingStepIndex?.(msg.step ?? null);
+                      onRegenerateStep?.();
+                  }}
+                  isStreaming={
+                    isStreaming &&
+                    (msg.step === currentStepIndex || confirmHostMessageId === msg.id)
+                  }
+                  // ✅ FIX: 兜底英文思考，仅在存在 reasoning 时处理
+                  reasoning={
+                    msg.reasoning
+                      ? localizeThinkingText(msg.reasoning)
+                      : msg.reasoning
+                  }
+                  expandReasoning
+                  resultLabel="本阶段结果"
+                  emptyResultHint={
+                    isStreaming &&
+                    (msg.step === currentStepIndex || confirmHostMessageId === msg.id)
+                      ? '等待本阶段思考完成后写入结果...'
+                      : '本阶段结果生成后将显示在这里；完整文稿请在右侧「生成记录」预览'
+                  }
+                  externalStepIndex={
+                    typeof msg.step === 'number' ? msg.step : currentStepIndex
+                  }
+                  onStepComplete={() => undefined}
+                  customComponents={{
+                    callout: ({ children, ...props }: any) => {
+                      const type = props['data-type'] || props.type || 'info';
+                      const title = props['data-title'] || props.title || '';
+                      const colors: Record<string, string> = {
+                        info: 'bg-blue-50 border-blue-200 text-blue-700',
+                        success: 'bg-green-50 border-green-200 text-green-700',
+                        warning: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+                        error: 'bg-red-50 border-red-200 text-red-700',
+                      };
+                      return (
+                        <div className={`callout border-l-4 p-3 my-2 rounded-r ${colors[type] || colors.info}`}>
+                          {title && <div className="font-medium text-sm">{title}</div>}
+                          <div className="text-sm">{children}</div>
+                        </div>
+                      );
+                    },
+                    ai: ({ children }: any) => (
+                      <div className="ai-annotation p-3 my-2 bg-purple-50 border-l-4 border-purple-400 rounded-r">
+                        <span className="text-xs font-medium text-purple-600">🤖 AI 生成</span>
+                        <div className="mt-1">{children}</div>
+                      </div>
+                    ),
+                    teacher: ({ children }: any) => (
+                      <div className="teacher-edit p-3 my-2 bg-amber-50 border-l-4 border-amber-400 rounded-r">
+                        <span className="text-xs font-medium text-amber-600">✏️ 教师修改</span>
+                        <div className="mt-1">{children}</div>
+                      </div>
+                    ),
+                  }}
+                />
+              </div>
+            </div>
           )}
         </div>
-        {isUser ? (
-          // 用户消息 - 宽度自适应，最大宽度 200px，从右往左增长
-          <div className="max-w-[200px] rounded-2xl px-4 py-3 bg-blue-500 text-white rounded-br-sm">
-            <div className="text-sm whitespace-pre-wrap break-words">
-              {msg.content}
-            </div>
-          </div>
-        ) : (
-          // AI 消息
-          <div className="rounded-2xl px-4 py-3 bg-white border border-gray-200 rounded-bl-sm shadow-sm w-full">
-            <div className="prose max-w-none text-[17px] leading-8">
-              <StepRenderer
-                steps={displayStageSteps(steps, selectedTemplate, {
-                  stepIndex: msg.step !== undefined ? msg.step : currentStepIndex,
-                  content: msg.content || '',
-                })}
-                typewriter={false}
-                showConfirm={confirmHostMessageId === msg.id}
-                confirmText={steps[currentStepIndex]?.confirmText || '进入下一步'}
-                onConfirm={() => onConfirmStep?.()}
-                onRegenerate={() => onRegenerateStep?.()}
-                isStreaming={isStreaming && (msg.step === currentStepIndex || confirmHostMessageId === msg.id)}
-                reasoning={msg.reasoning ? localizeThinkingText(msg.reasoning) : msg.reasoning}
-                expandReasoning
-                resultLabel="本阶段结果"
-                emptyResultHint={
-                  isStreaming && (msg.step === currentStepIndex || confirmHostMessageId === msg.id)
-                    ? '等待本阶段思考完成后写入结果...'
-                    : '本阶段结果生成后将显示在这里；完整文稿请在右侧「生成记录」预览'
-                }
-                externalStepIndex={typeof msg.step === 'number' ? msg.step : currentStepIndex}
-                onStepComplete={() => undefined}
-                customComponents={{
-                  callout: ({ children, ...props }: any) => {
-                    const type = props['data-type'] || props.type || 'info';
-                    const title = props['data-title'] || props.title || '';
-                    const colors: Record<string, string> = {
-                      info: 'bg-blue-50 border-blue-200 text-blue-700',
-                      success: 'bg-green-50 border-green-200 text-green-700',
-                      warning: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-                      error: 'bg-red-50 border-red-200 text-red-700',
-                    };
-                    return (
-                      <div className={`callout border-l-4 p-3 my-2 rounded-r ${colors[type] || colors.info}`}>
-                        {title && <div className="font-medium text-sm">{title}</div>}
-                        <div className="text-sm">{children}</div>
-                      </div>
-                    );
-                  },
-                  ai: ({ children }: any) => (
-                    <div className="ai-annotation p-3 my-2 bg-purple-50 border-l-4 border-purple-400 rounded-r">
-                      <span className="text-xs font-medium text-purple-600">🤖 AI 生成</span>
-                      <div className="mt-1">{children}</div>
-                    </div>
-                  ),
-                  teacher: ({ children }: any) => (
-                    <div className="teacher-edit p-3 my-2 bg-amber-50 border-l-4 border-amber-400 rounded-r">
-                      <span className="text-xs font-medium text-amber-600">✏️ 教师修改</span>
-                      <div className="mt-1">{children}</div>
-                    </div>
-                  ),
-                }}
-              />
-            </div>
-          </div>
-        )}
       </div>
-    </div>
     );
   };
 
@@ -489,10 +568,10 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
             <div className="text-5xl mb-4">{hasSteps ? '📝' : '📄'}</div>
             <p className="text-base font-medium text-gray-700">已选择「{templateLabel}」</p>
             <p className="text-sm text-gray-500 mt-2">
-              {hasSteps 
+              {hasSteps
                 ? selectedTemplate === '试卷模板'
                   ? '先在左侧选素材、右侧选试卷模板。发送后将按学情 → 题型难度 → 定稿 → 精修推进'
-                  : '发送消息将启动五阶段交互生成，每步需确认后继续' 
+                  : '发送消息将启动五阶段交互生成，每步需确认后继续'
                 : '发送消息将直接生成内容，无需步骤确认'}
             </p>
             <div className="mt-4 flex justify-center gap-2">
@@ -517,7 +596,7 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
   }
 
   // ============================================================
-  // 状态3: 会话进行中 - 加载状态
+  // 状态3: 会话进行中 - 加载状态（未开始会话时）
   // ============================================================
   if (loading && !sessionStarted) {
     return (
@@ -570,8 +649,8 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
                 <LoadingOutlined className="animate-spin" /> 逐字生成中
               </Tag>
             )}
-            <Badge 
-              count={`${currentStepIndex + 1}/${steps.length}`} 
+            <Badge
+              count={`${currentStepIndex + 1}/${steps.length}`}
               className="ml-1"
               style={{ backgroundColor: '#4f46e5' }}
             />
@@ -585,7 +664,7 @@ export const CenterPanel: React.FC<CenterPanelProps> = ({
 
         {/* 会话消息列表 */}
         <div className="flex-1 overflow-auto p-4 bg-gray-50/50 space-y-3">
-            {selectedTemplate === '试卷模板' && currentStep?.type === 'outline' && currentStep.status !== 'completed' ? (
+          {selectedTemplate === '试卷模板' && currentStep?.type === 'outline' && currentStep.status !== 'completed' ? (
             <div className="mb-1 rounded-xl border border-indigo-200 bg-white px-4 py-3">
               <div className="text-sm font-medium text-gray-800">请选择题型、题量和难度</div>
               <div className="text-xs text-gray-400 mt-1 mb-3">确认学情后会弹出设置框；关闭后可再次打开。</div>

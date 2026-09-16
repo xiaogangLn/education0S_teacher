@@ -59,7 +59,7 @@ function mergeFiles(...lists: FileItem[][]) {
   return Array.from(map.values());
 }
 
-export const useFileSelection = (initialPlannedFiles?: FileItem[]) => {
+export const useFileSelection = (initialPlannedFiles?: FileItem[], initialUploadedFiles?: FileItem[], taskId?: string) => {
   const org = useOrgContext();
   const currentUser = useAppSelector((state) => state.user.current);
   const teacherSubjects = useMemo(
@@ -102,11 +102,18 @@ export const useFileSelection = (initialPlannedFiles?: FileItem[]) => {
     load();
   }, [org.gradeId, subjectParam]);
 
-  const restoreSig = (initialPlannedFiles || []).map((file) => file.id).join('|');
+  const restoreSig = [
+    (initialPlannedFiles || []).map((file) => file.id).join('|'),
+    (initialUploadedFiles || []).map((file) => file.id).join('|'),
+  ].join('::');
   useEffect(() => {
     if (initialPlannedFiles === undefined) return;
     setSearchSelectedFiles(initialPlannedFiles);
     setSelectedFileIds(new Set(initialPlannedFiles.map((file) => file.id)));
+    // 历史任务期间上传的素材：仅回显（不默认勾选），勾选才参与生成
+    if (initialUploadedFiles?.length) {
+      setUploadedFiles((prev) => mergeFiles(prev, initialUploadedFiles));
+    }
   }, [restoreSig]);
 
   const plannedFiles = useMemo(
@@ -257,12 +264,14 @@ export const useFileSelection = (initialPlannedFiles?: FileItem[]) => {
           formData.append('category', 'material');
           if (org.gradeId) formData.append('grade_id', org.gradeId);
           if (teacherSubjects[0]) formData.append('subject', teacherSubjects[0]);
+          // 上传即挂到当前加工任务（仅关联；勾选后才进入本次生成的 materials）
+          if (taskId) formData.append('generation_task_id', taskId);
           const created = extractPayload<any>(await knowledgeService.create(formData));
           const doc = created?.document || created;
           mapped = mapDocument({
             id: String(doc.id || `upload-${Date.now()}`),
             title: doc.title || file.name,
-            type,
+            type: type as DocumentItem['type'],
             permission: doc.permission || 'personal',
             category: doc.category || 'material',
             file_size: doc.file_size || file.size,
@@ -291,18 +300,13 @@ export const useFileSelection = (initialPlannedFiles?: FileItem[]) => {
       }
       setUploadedFiles((prev) => mergeFiles(prev, added));
       setLibraryFiles((prev) => mergeFiles(prev, added));
-      setSelectedFileIds((prev) => {
-        const next = new Set(prev);
-        added.forEach((file) => next.add(file.id));
-        return next;
-      });
-      message.success(`已加入计划使用（${added.length} 个文件）`);
+      message.success(`已上传 ${added.length} 个文件并关联当前任务，勾选后参与生成`);
     } catch (error: any) {
       message.error(error?.message || '上传失败');
     } finally {
       setUploading(false);
     }
-  }, [org.gradeId, teacherSubjects, currentUser]);
+  }, [org.gradeId, teacherSubjects, currentUser, taskId]);
 
   const getCategoryCount = useCallback((category: string) => {
     if (category === 'all') return libraryFiles.length;
@@ -328,6 +332,7 @@ export const useFileSelection = (initialPlannedFiles?: FileItem[]) => {
     indeterminate,
     uploading,
     scopeLabel,
+    uploadedFiles,
     handleSearch,
     handleSearchChange,
     cancelPendingSearch: cancelDebouncedFetch,

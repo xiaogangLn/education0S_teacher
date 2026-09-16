@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { message } from 'antd';
-import { processingService } from '@api/index';
+import { processingService, knowledgeService } from '@api/index';
 import type { TemplateType, StepData } from '../types';
 import { getMarkdownStepsByTemplate, hasStepsByTemplate } from '@/utils/markdownSteps';
 import { extractPayload } from '@/utils/knowledgeMapper';
@@ -18,6 +18,7 @@ import { localizeThinkingText } from '@/utils/localizeThinking';
 export interface GenerationContext {
   template?: WorkbenchTemplate | null;
   materials?: FileItem[];
+  uploadIds?: string[]; // 会话内上传的全部文件（含未勾选），创建任务时回填任务归属
 }
 
 export interface ResearchSource {
@@ -301,7 +302,13 @@ export const useTemplateSelection = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const org = useOrgContext();
   const refreshSession = useRefreshSession();
+
+  // 进入工作台时同步一次最新权益/次数，确保商业版管理员调整次数后立即生效
+  useEffect(() => {
+    void refreshSession().catch(() => undefined);
+  }, [refreshSession]);
   const { commonTemplates, schoolTemplates } = useSchoolTemplates();
+  const [regeneratingStepIndex, setRegeneratingStepIndex] = useState<number | null>(null);
   const taskIdRef = useRef(searchParams.get('id') || '');
   const loadedIdRef = useRef('');
   const topicRef = useRef('');
@@ -323,6 +330,7 @@ export const useTemplateSelection = () => {
   const [loading, setLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [historyMaterials, setHistoryMaterials] = useState<FileItem[]>([]);
+  const [taskUploads, setTaskUploads] = useState<FileItem[]>([]);
   const [currentTaskId, setCurrentTaskId] = useState(searchParams.get('id') || '');
   const [topic, setTopic] = useState('');
   const [examSpec, setExamSpec] = useState<ExamSpec>(DEFAULT_EXAM_SPEC);
@@ -451,6 +459,17 @@ export const useTemplateSelection = () => {
         }
         applyTask(task, typeToTemplate(task.type));
         loadedIdRef.current = id;
+        // 任务期间上传的素材（含未勾选）单独回显：只关联任务，勾选才参与生成
+        setTaskUploads([]);
+        knowledgeService
+          .getList({ page: 1, page_size: 50, generation_task_id: id })
+          .then((res) => {
+            if (cancelled) return;
+            const listPayload = extractPayload<{ items?: any[] }>(res);
+            const uploads = (listPayload?.items || []).map((item: any, index: number) => mapTaskMaterial(item, index));
+            setTaskUploads(uploads);
+          })
+          .catch(() => undefined);
       } catch {
         if (!cancelled) message.error('加载加工任务失败');
       } finally {
@@ -496,6 +515,7 @@ export const useTemplateSelection = () => {
     setSessionStarted(false);
     setChatMessages([]);
     setHistoryMaterials([]);
+    setTaskUploads([]);
     setCurrentTaskId('');
     setTopic('');
     setExamSpec(DEFAULT_EXAM_SPEC);
@@ -642,6 +662,12 @@ export const useTemplateSelection = () => {
       return false;
     }
 
+    // 发起生成前先拉取最新权益，避免本地缓存的次数过期导致误判（商业版管理员调整次数后立即生效）
+    try {
+      await refreshSession();
+    } catch {
+      // 拉取失败时退回本地缓存判断，避免断网时完全卡住
+    }
     const quotaError = assertGenerationQuota(loadPersistedUser(), templateToType(selectedTemplate));
     if (quotaError) {
       message.error(quotaError);
@@ -678,6 +704,7 @@ export const useTemplateSelection = () => {
         title: item.name,
         type: item.type,
       })),
+      upload_ids: context?.uploadIds || [],
       teacher_ideas: {
         teaching_approach: text,
         key_points: [],
@@ -796,6 +823,7 @@ export const useTemplateSelection = () => {
     const nextIndex = stepIndex + 1;
     setLoading(true);
     try {
+      // ✅ 终点：refine 完成 → 整个任务结束，不需要进入下一阶段
       if (current.type === 'refine') {
         if (taskId) {
           await processingService.complete(taskId);
@@ -817,12 +845,15 @@ export const useTemplateSelection = () => {
         });
         return;
       }
-
+  
       if (taskId && current.type === 'analysis') {
         await processingService.confirmAnalysis(taskId, true);
       }
-
+  
       const nextStep = currentSteps[nextIndex];
+      if (!nextStep) return;
+  
+      // ✅ 试卷模板：analysis → outline 需要先弹 examSpec
       if (isExam && current.type === 'analysis') {
         const placeholder = '请在弹窗中选择题型、题量与难度，确认后再出题。';
         setSteps((prev) => prev.map((step, index) => {
@@ -841,11 +872,13 @@ export const useTemplateSelection = () => {
           role: 'assistant',
           content: placeholder,
           step: nextIndex,
-          type: nextStep?.type,
+          type: nextStep.type,
         });
         return;
       }
-
+  
+      // ✅ 通用路径：推进到下一阶段
+      // 关键 1：把当前 step 置为 completed；nextStep 置为 processing 且清空 content
       setSteps((prev) => prev.map((step, index) => {
         if (index === stepIndex) {
           const content = isExam && current.type === 'outline'
@@ -857,6 +890,10 @@ export const useTemplateSelection = () => {
         return step;
       }));
       setCurrentStepIndex(nextIndex);
+  
+      // 关键 2：屏蔽 nextStep 的旧内容，让流式开始前 UI 干净
+      setRegeneratingStepIndex(nextIndex);
+  
       appendMessage({
         role: 'system',
         content: `✅ 已确认「${current.title}」，进入第 ${nextIndex + 1} 步`,
@@ -866,15 +903,18 @@ export const useTemplateSelection = () => {
         role: 'assistant',
         content: '',
         step: nextIndex,
-        type: nextStep?.type,
+        type: nextStep.type,
       });
-      if (taskId && nextStep?.type) {
+  
+      if (taskId && nextStep.type) {
         await streamIntoStep(nextStep.type, nextIndex, msgId);
       }
     } catch (error: any) {
       message.error(error?.message || '推进加工阶段失败');
     } finally {
       setLoading(false);
+      // ✅ 关键 3：无论成功失败，清空屏蔽标记
+      setRegeneratingStepIndex(null);
     }
   }, [appendMessage, streamIntoStep]);
 
@@ -888,9 +928,16 @@ export const useTemplateSelection = () => {
       setExamSpecOpen(true);
       return;
     }
-    setSteps((prev) => prev.map((step, index) => (
-      index === stepIndex ? { ...step, content: '', status: 'processing' as const } : step
-    )));
+
+    console.log('[regenerateStep] setRegeneratingStepIndex =', stepIndex);  // ✅ 加这行
+  
+    // ✅ 关键1：设置重新生成标记，让 displayStageSteps 强行为空
+    setRegeneratingStepIndex(stepIndex);
+  
+    // ✅ 关键2：不要在这里清空 step.content！
+    // 让 displayStageSteps 屏蔽它。这样即使后端生成失败，旧内容也还在 steps 里。
+    // setSteps(...)  ← 删除这一行
+  
     appendMessage({
       role: 'system',
       content: `🔄 正在重新生成「${current.title}」`,
@@ -902,10 +949,16 @@ export const useTemplateSelection = () => {
       type: current.type,
       step: stepIndex,
     });
-    if (taskId) {
-      await streamIntoStep(current.type, stepIndex, msgId);
+  
+    try {
+      if (taskId) {
+        await streamIntoStep(current.type, stepIndex, msgId);
+      }
+      message.success(`已重新生成「${current.title}」`);
+    } finally {
+      // ✅ 关键3：无论成功失败，都清空重新生成标记
+      setRegeneratingStepIndex(null);
     }
-    message.success(`已重新生成「${current.title}」`);
   }, [appendMessage, streamIntoStep]);
 
   const exportMarkdown = useMemo(() => {
@@ -939,6 +992,7 @@ export const useTemplateSelection = () => {
     setSessionStarted(false);
     setChatMessages([]);
     setHistoryMaterials([]);
+    setTaskUploads([]);
     setCurrentTaskId('');
     setTopic('');
     setExamSpec(DEFAULT_EXAM_SPEC);
@@ -963,6 +1017,7 @@ export const useTemplateSelection = () => {
     progress,
     chatMessages,
     historyMaterials,
+    taskUploads,
     currentTaskId,
     topic,
     examSpec,
@@ -983,6 +1038,8 @@ export const useTemplateSelection = () => {
       }
     },
     exportMarkdown,
+    regeneratingStepIndex,
+    setRegeneratingStepIndex,
     selectTemplate,
     sendMessage,
     confirmStep,

@@ -48,6 +48,7 @@ export const knowledgeService = {
     grade_id?: string;
     subject?: string;
     exclude_type?: string;
+    generation_task_id?: string;
     sort_by?: 'created_at' | 'title' | 'view_count';
     sort_order?: 'asc' | 'desc';
   }) => {
@@ -250,6 +251,7 @@ export const knowledgeService = {
         status: string;
         created_at: string;
         images: string[];
+        annotated_images?: string[];
       };
     }>(`/knowledge/grading/${id}`);
   },
@@ -328,9 +330,23 @@ export const knowledgeService = {
     }>(`/knowledge/grading/tickets/${token}/submit`, data, { timeout: 180000 });
   },
 
-  // PUT /api/v1/knowledge/grading/{id}/confirm - 确认批改
-  confirmGrading: (id: string, confirmed: boolean, feedback?: string) => {
-    return httpClient.put(`/knowledge/grading/${id}/confirm`, { confirmed, feedback });
+  // PUT /api/v1/knowledge/grading/{id}/confirm - 确认批改（可携带原图批注的 OSS 地址存档）
+  confirmGrading: (id: string, confirmed: boolean, feedback?: string, annotatedImageUrls?: string[]) => {
+    return httpClient.put(`/knowledge/grading/${id}/confirm`, {
+      confirmed,
+      feedback,
+      ...(annotatedImageUrls?.length ? { annotated_image_urls: annotatedImageUrls } : {}),
+    });
+  },
+
+  // POST /api/v1/files/upload - 统一文件上传（OSS/local），dir 指定目录前缀
+  uploadFile: (file: File | Blob, options?: { dir?: string; filename?: string }) => {
+    const formData = new FormData();
+    formData.append('file', file, options?.filename || (file instanceof File ? file.name : 'upload.bin'));
+    if (options?.dir) formData.append('dir', options.dir);
+    return httpClient.post<{ url: string; filename: string; driver: string }>('/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   // PUT /api/v1/knowledge/grading/{id}/update - 修改批改

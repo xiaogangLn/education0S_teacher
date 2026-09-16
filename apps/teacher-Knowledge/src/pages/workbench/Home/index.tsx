@@ -3,7 +3,6 @@ import { Label } from '@ui';
 import { Button, Modal, Segmented } from 'antd';
 import { AppstoreOutlined, PlusOutlined, SearchOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useDebounce } from 'ahooks';
-import { getRandomColor } from '@/utils/colorUtils';
 import { useNavigate } from 'react-router-dom';
 import { processingService } from '@api/index';
 import { extractPayload } from '@/utils/knowledgeMapper';
@@ -11,6 +10,7 @@ import { useOrgContext } from '@/hooks/useOrgContext';
 import { CreatePicker, type GenerateType } from './CreatePicker';
 import { artifactDisplayName } from '@/utils/artifactName';
 import { isCommercialTenant, loadPersistedUser } from '@/utils/currentUser';
+import { getCardTheme } from '@/utils/cardTheme';
 import { ImeSafeInput } from '@/components/ImeSafeInput';
 
 type ViewMode = 'card' | 'list';
@@ -91,9 +91,10 @@ const Home = () => {
     return recent.filter((item) => fuzzyMatch(item, recentQuery));
   }, [recent, recentQuery, showRecentSearch]);
 
-  const itemsWithColor = filteredRecent.map((item) => ({
+  // ✅ 按内容确定性生成主题背景：同一记录始终同一张「背景图」，无随机
+  const itemsWithTheme = filteredRecent.map((item) => ({
     ...item,
-    color: getRandomColor(),
+    theme: getCardTheme(item),
   }));
 
   const emptyHint = `暂无${commercial ? '' : (org.className || org.gradeName ? `「${org.className || org.gradeName}」的` : '')}加工记录，点击下方创建开始。`;
@@ -148,20 +149,27 @@ const Home = () => {
       {featured.length === 0 && (
         <div className="text-sm text-gray-400 py-2">{emptyHint}</div>
       )}
-      {featured.map((item) => (
-        <div
-          key={item.id}
-          className="relative bg-white rounded-[16px] p-5 w-[min(100%,320px)] min-h-[190px] hover:shadow-lg cursor-pointer"
-          onClick={() => handleHistory(item)}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-700 to-indigo-400 rounded-[16px]" />
-          <div className="relative py-4 px-2 text-white">
-            <h3 className="font-bold line-clamp-2">{artifactDisplayName(item.title || item.topic, item.type)}</h3>
-            <span className="text-[13px] text-white/90">{metaText(item)}</span>
-            <div className="text-[12px] text-white/80 mt-1">{timeText(item)}</div>
+      {featured.map((item) => {
+        const theme = getCardTheme(item);
+        return (
+          <div
+            key={item.id}
+            className={`relative overflow-hidden bg-gradient-to-br ${theme.gradient} border ${theme.borderClass} rounded-[16px] p-5 w-[min(100%,320px)] min-h-[190px] hover:shadow-lg cursor-pointer`}
+            onClick={() => handleHistory(item)}
+          >
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ backgroundImage: theme.decor, backgroundRepeat: 'no-repeat', backgroundPosition: 'right bottom' }}
+            />
+            <div className="relative py-4 px-2">
+              <h3 className="font-bold line-clamp-2">{artifactDisplayName(item.title || item.topic, item.type)}</h3>
+              <span className="text-[13px] text-[#6b7280]">{metaText(item)}</span>
+              <div className={`text-[12px] mt-1.5 ${theme.accentTextClass}`}>{theme.label}</div>
+              <div className="text-[12px] text-[#6b7280] mt-0.5">{timeText(item)}</div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -170,20 +178,24 @@ const Home = () => {
       {featured.length === 0 && (
         <div className="text-sm text-gray-400 py-2">{emptyHint}</div>
       )}
-      {featured.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => handleHistory(item)}
-          className="flex items-center gap-3 w-full text-left rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-700 to-indigo-500 px-4 py-3 text-white hover:opacity-95 cursor-pointer"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold truncate">{artifactDisplayName(item.title || item.topic, item.type)}</div>
-            <div className="text-xs text-white/85 mt-0.5 truncate">{metaText(item)} · {timeText(item)}</div>
-          </div>
-          <span className="text-xs shrink-0 opacity-90">打开</span>
-        </button>
-      ))}
+      {featured.map((item) => {
+        const theme = getCardTheme(item);
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => handleHistory(item)}
+            className={`flex items-center gap-3 w-full text-left rounded-xl border border-gray-100 bg-gradient-to-r ${theme.gradient} px-4 py-3 hover:opacity-95 cursor-pointer`}
+          >
+            <span className={`w-1 self-stretch rounded-full ${theme.accentClass} opacity-50 shrink-0`} />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-gray-800 truncate">{artifactDisplayName(item.title || item.topic, item.type)}</div>
+              <div className="text-xs text-gray-500 mt-0.5 truncate">{metaText(item)} · {timeText(item)}</div>
+            </div>
+            <span className="text-xs shrink-0 text-gray-400">打开</span>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -201,37 +213,49 @@ const Home = () => {
           />
         </div>
       </div>
-      {itemsWithColor.map((item) => (
+      {itemsWithTheme.map((item) => (
         <div
           onClick={() => handleHistory(item)}
           key={item.id}
           className={`
-            ${item.color.bg}
-            ${item.color.border}
-            p-6 border
+            relative overflow-hidden
+            bg-gradient-to-br ${item.theme.gradient}
+            border ${item.theme.borderClass}
+            p-6
             w-[min(100%,320px)]
             min-h-[190px]
-            hover:shadow-md ${item.color.hover}
+            hover:shadow-md
             transition-all duration-300
             rounded-[16px]
             cursor-pointer
           `}
         >
-          <h3 className="font-bold line-clamp-2">{artifactDisplayName(item.title || item.topic, item.type)}</h3>
-          <span className="text-[13px] text-[#6b7280]">{metaText(item, true)}</span>
-          <div className="text-[12px] text-[#6b7280] mt-1">{timeText(item)}</div>
-          <div className="flex mt-3 gap-3">
-            <Button
-              style={{ backgroundColor: '#eef2ff', border: 'transparent' }}
-              shape="round"
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleHistory(item);
-              }}
-            >
-              <span className="text-[12px] text-[#4f46e5] font-medium">继续</span>
-            </Button>
+          {/* 内容主题背景：右下角线条装饰 */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ backgroundImage: item.theme.decor, backgroundRepeat: 'no-repeat', backgroundPosition: 'right bottom' }}
+          />
+          <div className="relative">
+            <h3 className="font-bold line-clamp-2">{artifactDisplayName(item.title || item.topic, item.type)}</h3>
+            <span className="text-[13px] text-[#6b7280]">{metaText(item, true)}</span>
+            <div className={`text-[12px] mt-1.5 ${item.theme.accentTextClass}`}>{item.theme.label}</div>
+            <div className="text-[12px] text-[#6b7280] mt-0.5">{timeText(item)}</div>
+            {/* 已定稿任务只可查看详情，不再显示「继续」 */}
+            {item?.status !== 'generated' && (
+              <div className="flex mt-3 gap-3">
+                <Button
+                  style={{ backgroundColor: '#ffffff99', border: 'transparent' }}
+                  shape="round"
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHistory(item);
+                  }}
+                >
+                  <span className="text-[12px] text-[#4f46e5] font-medium">继续</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -241,10 +265,10 @@ const Home = () => {
   const renderRecentList = () => (
     <div className="flex flex-col gap-2">
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden">
-        {itemsWithColor.length === 0 ? (
+        {itemsWithTheme.length === 0 ? (
           <div className="px-4 py-6 text-sm text-gray-400">{recentEmptyHint}</div>
         ) : (
-          itemsWithColor.map((item, index) => (
+          itemsWithTheme.map((item, index) => (
             <div
               key={item.id}
               className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 ${
@@ -252,6 +276,8 @@ const Home = () => {
               }`}
               onClick={() => handleHistory(item)}
             >
+              {/* 主题标识：色条 */}
+              <span className={`w-1 self-stretch rounded-full ${item.theme.accentClass} opacity-50 shrink-0`} />
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-gray-800 truncate">
                   {artifactDisplayName(item.title || item.topic, item.type)}
@@ -260,17 +286,20 @@ const Home = () => {
                   {metaText(item, true)} · {timeText(item)}
                 </div>
               </div>
-              <Button
-                size="small"
-                shape="round"
-                style={{ backgroundColor: '#eef2ff', border: 'transparent' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleHistory(item);
-                }}
-              >
-                <span className="text-[12px] text-[#4f46e5] font-medium">继续</span>
-              </Button>
+              {/* 已定稿任务只可查看详情，不再显示「继续」 */}
+              {item?.status !== 'generated' && (
+                <Button
+                  size="small"
+                  shape="round"
+                  style={{ backgroundColor: '#eef2ff', border: 'transparent' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleHistory(item);
+                  }}
+                >
+                  <span className="text-[12px] text-[#4f46e5] font-medium">继续</span>
+                </Button>
+              )}
             </div>
           ))
         )}
@@ -281,22 +310,24 @@ const Home = () => {
   return (
     <div className="h-full min-h-0 flex flex-col">
       <div className="flex-1 min-h-0 flex flex-col rounded-2xl overflow-hidden">
-        <section className="min-h-0 max-h-[50%] flex flex-col overflow-hidden px-4 pt-3 pb-2">
-          <div className="shrink-0 pb-2 flex items-center justify-between">
-            <Label className="font-bold text-[16px] text-[111827]">📌 历史精选生成记录</Label>
+        {!commercial && (
+          <section className="min-h-0 max-h-[50%] flex flex-col overflow-hidden px-4 pt-3 pb-2">
+            <div className="shrink-0 pb-2 flex items-center justify-between">
+              <Label className="font-bold text-[16px] text-[111827]">📌 历史精选生成记录</Label>
               <Segmented
-              value={viewMode}
-              onChange={(value) => handleViewMode(value as ViewMode)}
-              options={[
-                { label: '卡片', value: 'card', icon: <AppstoreOutlined /> },
-                { label: '列表', value: 'list', icon: <UnorderedListOutlined /> },
-              ]}
-            />
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            {viewMode === 'card' ? renderFeaturedCards() : renderFeaturedList()}
-          </div>
-        </section>
+                value={viewMode}
+                onChange={(value) => handleViewMode(value as ViewMode)}
+                options={[
+                  { label: '卡片', value: 'card', icon: <AppstoreOutlined /> },
+                  { label: '列表', value: 'list', icon: <UnorderedListOutlined /> },
+                ]}
+              />
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              {viewMode === 'card' ? renderFeaturedCards() : renderFeaturedList()}
+            </div>
+          </section>
+        )}
 
         <section className="flex-1 min-h-0 flex flex-col px-4 pt-3 pb-2">
           <div className="shrink-0 pb-2 flex items-center gap-3">
@@ -321,12 +352,20 @@ const Home = () => {
                   新建
                 </Button>
               ) : null}
+              <Segmented
+                value={viewMode}
+                onChange={(value) => handleViewMode(value as ViewMode)}
+                options={[
+                  { label: '卡片', value: 'card', icon: <AppstoreOutlined /> },
+                  { label: '列表', value: 'list', icon: <UnorderedListOutlined /> },
+                ]}
+              />
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             {viewMode === 'card' ? (
               <>
-                {showRecentSearch && recentQuery.trim() && itemsWithColor.length === 0 ? (
+                {showRecentSearch && recentQuery.trim() && itemsWithTheme.length === 0 ? (
                   <div className="text-sm text-gray-400 py-2">{recentEmptyHint}</div>
                 ) : null}
                 {renderRecentCards()}

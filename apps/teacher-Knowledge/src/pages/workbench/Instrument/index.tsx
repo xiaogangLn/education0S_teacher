@@ -29,6 +29,7 @@ export const Instrument: React.FC = () => {
     progress,
     chatMessages,
     historyMaterials,
+    taskUploads,
     currentTaskId,
     topic,
     examSpec,
@@ -37,6 +38,8 @@ export const Instrument: React.FC = () => {
     examTypeCatalog,
     examPaperMarkdown,
     examAnswerMarkdown,
+    regeneratingStepIndex,
+    setRegeneratingStepIndex,
     setExamSpecOpen,
     setExamSpec,
     exportMarkdown,
@@ -48,6 +51,7 @@ export const Instrument: React.FC = () => {
   } = useTemplateSelection();
 
   const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
+  const [uploadIds, setUploadIds] = useState<string[]>([]);
 
   const handleSelectTemplate = (template: TemplateType, meta?: WorkbenchTemplate) => {
     if (sessionStarted) return;
@@ -63,12 +67,17 @@ export const Instrument: React.FC = () => {
     });
   }, []);
 
+  const handleUploadedFiles = useCallback((files: FileItem[]) => {
+    setUploadIds(files.map((item) => item.id).filter(Boolean));
+  }, []);
+
   const handleSendMessage = useCallback((text: string) => {
     return sendMessage(text, {
       template: selectedTemplateMeta,
       materials: selectedFiles,
+      uploadIds,
     });
-  }, [sendMessage, selectedTemplateMeta, selectedFiles]);
+  }, [sendMessage, selectedTemplateMeta, selectedFiles, uploadIds]);
 
   if (isResearch) {
     return (
@@ -77,6 +86,8 @@ export const Instrument: React.FC = () => {
           variant="research"
           sessionStarted
           isInitialized
+          regeneratingStepIndex={regeneratingStepIndex}
+          setRegeneratingStepIndex={setRegeneratingStepIndex}
           loading={research.loading}
           chatMessages={research.chatMessages}
           savingToKnowledge={research.saving}
@@ -94,7 +105,10 @@ export const Instrument: React.FC = () => {
           <LeftPanel
             onFileClick={() => undefined}
             onSelectedFiles={handleSelectedFiles}
+            onUploadedFilesChange={handleUploadedFiles}
             initialPlannedFiles={historyMaterials}
+            initialUploadedFiles={taskUploads}
+            taskId={currentTaskId}
             historyMode={sessionStarted}
           />
         </Allotment.Pane>
