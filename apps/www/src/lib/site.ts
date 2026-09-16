@@ -9,7 +9,7 @@ export const siteConfig = {
   twitter: '',
 };
 
-export const appUrl = (import.meta.env.PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+export const appUrl = (import.meta.env.PUBLIC_APP_URL || 'http://47.114.77.74:8081').replace(/\/$/, '');
 export const siteUrl = (import.meta.env.PUBLIC_SITE_URL || 'https://www.educationos.cn').replace(/\/$/, '');
 
 export const links = {
