@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRegister } from './hooks/useRegister';
+import { HumanVerifyModal } from '@/components/HumanVerifyModal';
 import StepIndicator from './components/StepIndicator';
 import Step1 from './components/Step1';
 import Step2 from './components/Step2';
@@ -24,9 +25,10 @@ const Register: React.FC = () => {
     captcha,
     setCaptcha,
     captchaNonce,
-    humanToken,
-    setHumanToken,
+    humanModalOpen,
     humanNonce,
+    closeHumanModal,
+    handleHumanVerified,
     debugConfirmUrl,
   } = useRegister();
 
@@ -60,15 +62,20 @@ const Register: React.FC = () => {
             captcha={captcha}
             setCaptcha={setCaptcha}
             captchaNonce={captchaNonce}
-            humanToken={humanToken}
-            setHumanToken={setHumanToken}
-            humanNonce={humanNonce}
           />
         )}
         {currentStep === 3 && (
           <Step3 formData={formData} debugConfirmUrl={debugConfirmUrl} />
         )}
       </div>
+
+      <HumanVerifyModal
+        open={humanModalOpen}
+        nonce={humanNonce}
+        confirming={isLoading}
+        onCancel={closeHumanModal}
+        onVerified={handleHumanVerified}
+      />
     </div>
   );
 };

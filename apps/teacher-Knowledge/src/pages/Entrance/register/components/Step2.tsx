@@ -1,6 +1,5 @@
 import React from 'react';
 import { ImageCaptchaField, type ImageCaptchaValue } from '@/components/ImageCaptchaField';
-import { HumanVerifySlider } from '@/components/HumanVerifySlider';
 
 interface Step2Props {
   formData: any;
@@ -12,13 +11,10 @@ interface Step2Props {
   captcha: ImageCaptchaValue;
   setCaptcha: (value: ImageCaptchaValue) => void;
   captchaNonce: number;
-  humanToken: string;
-  setHumanToken: (value: string) => void;
-  humanNonce: number;
 }
 
 /**
- * 能力：注册第二步 — 邮箱 + 图片验证码 + 人机滑块。
+ * 能力：注册第二步 — 邮箱 + 图片验证码（人机验证在提交时弹窗，与登录一致）。
  * 输入：表单状态与回调。
  * 输出：提交注册。
  */
@@ -32,9 +28,6 @@ const Step2: React.FC<Step2Props> = ({
   captcha,
   setCaptcha,
   captchaNonce,
-  humanToken,
-  setHumanToken,
-  humanNonce,
 }) => {
   return (
     <>
@@ -81,19 +74,6 @@ const Step2: React.FC<Step2Props> = ({
         />
         {formErrors.captcha && (
           <span className="text-xs text-red-500 mt-1 mb-3 block">{formErrors.captcha}</span>
-        )}
-
-        <label className="block text-sm font-medium text-gray-800 mb-1 mt-3">
-          人机验证 <span className="text-red-500">*</span>
-        </label>
-        <HumanVerifySlider
-          refreshKey={humanNonce}
-          value={humanToken}
-          onChange={setHumanToken}
-          disabled={isLoading}
-        />
-        {formErrors.human && (
-          <span className="text-xs text-red-500 mt-1 block">{formErrors.human}</span>
         )}
       </div>
 

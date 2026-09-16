@@ -30,9 +30,10 @@ export const useRegister = (): RegisterHookReturn & {
   captcha: ImageCaptchaValue;
   setCaptcha: (v: ImageCaptchaValue) => void;
   captchaNonce: number;
-  humanToken: string;
-  setHumanToken: (v: string) => void;
+  humanModalOpen: boolean;
   humanNonce: number;
+  closeHumanModal: () => void;
+  handleHumanVerified: (humanToken: string) => Promise<void>;
   debugConfirmUrl?: string;
 } => {
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -48,7 +49,7 @@ export const useRegister = (): RegisterHookReturn & {
     captcha_code: '',
   });
   const [captchaNonce, setCaptchaNonce] = useState(0);
-  const [humanToken, setHumanToken] = useState('');
+  const [humanModalOpen, setHumanModalOpen] = useState(false);
   const [humanNonce, setHumanNonce] = useState(0);
   const [debugConfirmUrl, setDebugConfirmUrl] = useState<string | undefined>();
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -108,8 +109,8 @@ export const useRegister = (): RegisterHookReturn & {
   }, [formData]);
 
   /**
-   * 能力：校验第二步邮箱、图片验证码与人机滑块。
-   * 输入：formData + captcha + humanToken。
+   * 能力：校验第二步邮箱与图片验证码（人机验证在提交时弹窗）。
+   * 输入：formData + captcha。
    * 输出：是否通过。
    */
   const validateStep2 = useCallback((): boolean => {
@@ -120,12 +121,9 @@ export const useRegister = (): RegisterHookReturn & {
     if (!captcha.captcha_id || !captcha.captcha_code.trim()) {
       errors.captcha = '请填写图片验证码';
     }
-    if (!humanToken.trim()) {
-      errors.human = '请完成人机滑块验证';
-    }
     setFormErrors((prev) => ({ ...prev, ...errors }));
     return Object.keys(errors).length === 0;
-  }, [formData.email, captcha, humanToken]);
+  }, [formData.email, captcha]);
 
   const handleNextStep = useCallback(() => {
     if (!validateStep1()) return;
@@ -140,16 +138,26 @@ export const useRegister = (): RegisterHookReturn & {
   const refreshSecurity = useCallback(() => {
     setCaptcha({ captcha_id: '', captcha_code: '' });
     setCaptchaNonce((n) => n + 1);
-    setHumanToken('');
     setHumanNonce((n) => n + 1);
   }, []);
 
   /**
-   * 能力：提交注册（不自动登录）。
-   * 输入：完整表单 + 图片码 + 人机令牌。
-   * 输出：进入等待邮箱确认步骤。
+   * 能力：关闭人机弹窗并重置滑块。
+   * 输入：无。
+   * 输出：void。
    */
-  const handleRegister = useCallback(async () => {
+  const closeHumanModal = useCallback(() => {
+    if (isLoading) return;
+    setHumanModalOpen(false);
+    setHumanNonce((n) => n + 1);
+  }, [isLoading]);
+
+  /**
+   * 能力：点击提交注册 — 校验后弹出人机验证（与登录一致）。
+   * 输入：完整表单 + 图片码。
+   * 输出：打开 humanModal。
+   */
+  const handleRegister = useCallback(() => {
     if (!validateStep1()) {
       setCurrentStep(1);
       return;
@@ -158,36 +166,51 @@ export const useRegister = (): RegisterHookReturn & {
       setCurrentStep(2);
       return;
     }
+    setHumanNonce((n) => n + 1);
+    setHumanModalOpen(true);
+  }, [validateStep1, validateStep2]);
 
-    setIsLoading(true);
-    try {
-      const response = await authService.register({
-        phone: formData.phone.trim(),
-        password: formData.password,
-        name: formData.realName.trim(),
-        stage: formData.stage,
-        subjects: formData.subjects,
-        email: formData.email.trim(),
-        captcha_id: captcha.captcha_id,
-        captcha_code: captcha.captcha_code.trim(),
-        human_token: humanToken.trim(),
-      });
-      const payload: any = extractPayload(response) || response.data || response;
-      if (payload?.need_email_confirm || payload?.email) {
-        setDebugConfirmUrl(payload.debug_confirm_url);
-        setCurrentStep(3);
-        message.success(payload.message || '请查收邮箱完成确认');
-        return;
+  /**
+   * 能力：人机通过后真正发起注册请求（不自动登录）。
+   * 输入：human_token。
+   * 输出：进入等待邮箱确认步骤。
+   */
+  const handleHumanVerified = useCallback(
+    async (humanToken: string) => {
+      if (!humanToken.trim() || isLoading) return;
+
+      setHumanModalOpen(false);
+      setIsLoading(true);
+      try {
+        const response = await authService.register({
+          phone: formData.phone.trim(),
+          password: formData.password,
+          name: formData.realName.trim(),
+          stage: formData.stage,
+          subjects: formData.subjects,
+          email: formData.email.trim(),
+          captcha_id: captcha.captcha_id,
+          captcha_code: captcha.captcha_code.trim(),
+          human_token: humanToken.trim(),
+        });
+        const payload: any = extractPayload(response) || response.data || response;
+        if (payload?.need_email_confirm || payload?.email) {
+          setDebugConfirmUrl(payload.debug_confirm_url);
+          setCurrentStep(3);
+          message.success(payload.message || '请查收邮箱完成确认');
+          return;
+        }
+        message.warning('注册响应异常，请尝试登录或联系管理员');
+        refreshSecurity();
+      } catch (error: any) {
+        message.error(error?.message || '注册失败');
+        refreshSecurity();
+      } finally {
+        setIsLoading(false);
       }
-      message.warning('注册响应异常，请尝试登录或联系管理员');
-      refreshSecurity();
-    } catch (error: any) {
-      message.error(error?.message || '注册失败');
-      refreshSecurity();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [formData, captcha, humanToken, validateStep1, validateStep2, refreshSecurity]);
+    },
+    [formData, captcha, isLoading, refreshSecurity],
+  );
 
   const handleReset = useCallback(() => {
     setCurrentStep(1);
@@ -223,9 +246,10 @@ export const useRegister = (): RegisterHookReturn & {
     captcha,
     setCaptcha,
     captchaNonce,
-    humanToken,
-    setHumanToken,
+    humanModalOpen,
     humanNonce,
+    closeHumanModal,
+    handleHumanVerified,
     debugConfirmUrl,
   };
 };

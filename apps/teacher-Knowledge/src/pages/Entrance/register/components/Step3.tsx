@@ -3,7 +3,7 @@ import { message } from 'antd';
 import { authService } from '@api/index';
 import { extractPayload } from '@/utils/knowledgeMapper';
 import { ImageCaptchaField, type ImageCaptchaValue } from '@/components/ImageCaptchaField';
-import { HumanVerifySlider } from '@/components/HumanVerifySlider';
+import { HumanVerifyModal } from '@/components/HumanVerifyModal';
 
 interface Step3Props {
   formData: any;
@@ -11,7 +11,7 @@ interface Step3Props {
 }
 
 /**
- * 能力：展示「等待邮箱确认」结果页，并支持重发确认邮件。
+ * 能力：展示「等待邮箱确认」结果页，并支持重发确认邮件（人机验证弹窗与登录一致）。
  * 输入：注册表单摘要、可选 debug 链接。
  * 输出：引导用户查收邮件并完成确认。
  */
@@ -21,19 +21,28 @@ const Step3: React.FC<Step3Props> = ({ formData, debugConfirmUrl }) => {
     captcha_code: '',
   });
   const [captchaNonce, setCaptchaNonce] = useState(0);
-  const [humanToken, setHumanToken] = useState('');
+  const [humanModalOpen, setHumanModalOpen] = useState(false);
   const [humanNonce, setHumanNonce] = useState(0);
   const [sending, setSending] = useState(false);
 
-  const handleResend = async () => {
+  const handleResend = () => {
     if (!captcha.captcha_id || !captcha.captcha_code) {
       message.warning('请填写图片验证码');
       return;
     }
-    if (!humanToken.trim()) {
-      message.warning('请先完成人机滑块验证');
-      return;
-    }
+    setHumanNonce((n) => n + 1);
+    setHumanModalOpen(true);
+  };
+
+  const closeHumanModal = () => {
+    if (sending) return;
+    setHumanModalOpen(false);
+    setHumanNonce((n) => n + 1);
+  };
+
+  const handleHumanVerified = async (humanToken: string) => {
+    if (!humanToken.trim() || sending) return;
+    setHumanModalOpen(false);
     setSending(true);
     try {
       const res = await authService.resendConfirmEmail({
@@ -54,7 +63,6 @@ const Step3: React.FC<Step3Props> = ({ formData, debugConfirmUrl }) => {
       setSending(false);
       setCaptcha({ captcha_id: '', captcha_code: '' });
       setCaptchaNonce((n) => n + 1);
-      setHumanToken('');
       setHumanNonce((n) => n + 1);
     }
   };
@@ -93,35 +101,32 @@ const Step3: React.FC<Step3Props> = ({ formData, debugConfirmUrl }) => {
         </p>
       ) : null}
 
-      <div className="text-left mb-3 space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-800 mb-1">重发前请填写图片验证码</label>
-          <ImageCaptchaField
-            refreshKey={captchaNonce}
-            value={captcha}
-            onChange={setCaptcha}
-            disabled={sending}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-800 mb-1">人机验证</label>
-          <HumanVerifySlider
-            refreshKey={humanNonce}
-            value={humanToken}
-            onChange={setHumanToken}
-            disabled={sending}
-          />
-        </div>
+      <div className="text-left mb-3">
+        <label className="block text-sm font-medium text-gray-800 mb-1">重发前请填写图片验证码</label>
+        <ImageCaptchaField
+          refreshKey={captchaNonce}
+          value={captcha}
+          onChange={setCaptcha}
+          disabled={sending}
+        />
       </div>
 
       <button
         type="button"
         className="w-full py-2.5 mb-2 rounded-xl border border-blue-200 text-blue-600 text-sm font-medium hover:bg-blue-50"
-        onClick={() => void handleResend()}
+        onClick={handleResend}
         disabled={sending}
       >
         {sending ? '发送中...' : '重发确认邮件'}
       </button>
+
+      <HumanVerifyModal
+        open={humanModalOpen}
+        nonce={humanNonce}
+        confirming={sending}
+        onCancel={closeHumanModal}
+        onVerified={handleHumanVerified}
+      />
     </div>
   );
 };
