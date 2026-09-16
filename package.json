@@ -8,6 +8,7 @@
     "dev:www": "pnpm --filter www dev",
     "collab": "pnpm --filter teacher-knowledge collab",
     "build": "pnpm --filter teacher-knowledge build",
+    "build:admin": "pnpm --filter admin build",
     "build:www": "pnpm --filter www build",
     "preview": "pnpm --filter teacher-knowledge preview",
     "preview:www": "pnpm --filter www preview",
