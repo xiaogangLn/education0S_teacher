@@ -36,6 +36,7 @@ if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW === 'true') {
   await worker.start({
     onUnhandledRequest: 'bypass',
   });
+  console.log('🎭 MSW enabled');
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
